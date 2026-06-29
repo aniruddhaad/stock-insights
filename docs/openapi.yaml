@@ -1,0 +1,1278 @@
+openapi: 3.0.3
+info:
+  title: Stock Insights API
+  version: 1.0.0
+  description: >
+    Express + MongoDB API for authentication, stock CRUD, portfolio summaries,
+    scenario projections, sell-analysis, and portfolio insights.
+servers:
+  - url: http://localhost:4000
+    description: Local development server
+security:
+  - bearerAuth: []
+tags:
+  - name: Health
+  - name: Auth
+  - name: Stocks
+  - name: Portfolio
+paths:
+  /api/health:
+    get:
+      tags: [Health]
+      summary: Health check
+      description: Returns a simple service heartbeat.
+      security: []
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+              example:
+                success: true
+                data:
+                  service: stock-insights
+                  status: ok
+
+  /api/auth/signup:
+    post:
+      tags: [Auth]
+      summary: Create account
+      description: Creates a new user account, hashes the password, and returns a JWT.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignupRequest"
+            example:
+              name: Demo Investor
+              email: demo@stockinsights.dev
+              password: Demo@1234
+      responses:
+        "201":
+          description: Account created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+              example:
+                success: true
+                data:
+                  user:
+                    _id: 6804f0f1a1a1a1a1a1a1a001
+                    name: Demo Investor
+                    email: demo@stockinsights.dev
+                    createdAt: "2026-04-20T15:40:12.000Z"
+                    updatedAt: "2026-04-20T15:40:12.000Z"
+                  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.demo.signup.token
+        "400":
+          $ref: "#/components/responses/ValidationErrorResponse"
+        "409":
+          $ref: "#/components/responses/EmailConflictResponse"
+
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Login
+      description: Authenticates an existing user and returns a JWT.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+            example:
+              email: demo@stockinsights.dev
+              password: Demo@1234
+      responses:
+        "200":
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+              example:
+                success: true
+                data:
+                  user:
+                    _id: 6804f0f1a1a1a1a1a1a1a001
+                    name: Demo Investor
+                    email: demo@stockinsights.dev
+                    createdAt: "2026-04-20T15:40:12.000Z"
+                    updatedAt: "2026-04-20T15:40:12.000Z"
+                  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.demo.login.token
+        "400":
+          $ref: "#/components/responses/ValidationErrorResponse"
+        "401":
+          $ref: "#/components/responses/InvalidCredentialsResponse"
+
+  /api/stocks:
+    get:
+      tags: [Stocks]
+      summary: List stocks
+      description: Returns all stock positions owned by the authenticated user.
+      responses:
+        "200":
+          description: List of user stock positions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockListResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+    post:
+      tags: [Stocks]
+      summary: Create stock
+      description: Creates a new stock position for the authenticated user.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateStockRequest"
+            example:
+              symbol: TCS
+              quantity: 12
+              buyPrice: 3650
+              buyDate: "2024-02-12"
+              currentPrice: 4015
+              note: Core IT holding
+      responses:
+        "201":
+          description: Stock created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockResponse"
+        "400":
+          $ref: "#/components/responses/ValidationErrorResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+
+  /api/stocks/{stockId}:
+    parameters:
+      - $ref: "#/components/parameters/StockIdParam"
+    get:
+      tags: [Stocks]
+      summary: Get stock by id
+      description: Returns a single stock position if it belongs to the authenticated user.
+      responses:
+        "200":
+          description: Stock position found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "404":
+          $ref: "#/components/responses/StockNotFoundResponse"
+    patch:
+      tags: [Stocks]
+      summary: Update stock
+      description: Partially updates a stock position owned by the authenticated user.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateStockRequest"
+            example:
+              quantity: 15
+              currentPrice: 4055
+              note: Increased after earnings
+      responses:
+        "200":
+          description: Stock updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockResponse"
+        "400":
+          $ref: "#/components/responses/ValidationErrorResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "404":
+          $ref: "#/components/responses/StockNotFoundResponse"
+    delete:
+      tags: [Stocks]
+      summary: Delete stock
+      description: Deletes a stock position owned by the authenticated user.
+      responses:
+        "200":
+          description: Stock deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteStockResponse"
+              example:
+                success: true
+                data:
+                  deleted: true
+                  stockId: 6804f0f1a1a1a1a1a1a1a101
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "404":
+          $ref: "#/components/responses/StockNotFoundResponse"
+
+  /api/portfolio/summary:
+    get:
+      tags: [Portfolio]
+      summary: Portfolio summary
+      description: >
+        Returns aggregate portfolio totals, allocation percentages, a portfolio-level
+        scenario projection, and per-position sell-analysis plus scenario projection.
+      parameters:
+        - $ref: "#/components/parameters/YearsParam"
+        - $ref: "#/components/parameters/IncludeInflationParam"
+        - $ref: "#/components/parameters/InflationRateParam"
+      responses:
+        "200":
+          description: Portfolio summary generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PortfolioSummaryResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+
+  /api/portfolio/insights:
+    get:
+      tags: [Portfolio]
+      summary: Portfolio insights
+      description: >
+        Returns the portfolio summary, ranking blocks, position-level scoring,
+        sentiment, explanations, sell-analysis, and scenario projections.
+      parameters:
+        - $ref: "#/components/parameters/YearsParam"
+        - $ref: "#/components/parameters/IncludeInflationParam"
+        - $ref: "#/components/parameters/InflationRateParam"
+      responses:
+        "200":
+          description: Portfolio insights generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PortfolioInsightsResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+
+  /api/portfolio/sell-analysis:
+    post:
+      tags: [Portfolio]
+      summary: Run sell analysis
+      description: Runs sell-analysis logic on the provided position inputs.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SellAnalysisRequest"
+            example:
+              buyPrice: 100
+              quantity: 20
+              currentPrice: 122
+              holdingDurationDays: 140
+      responses:
+        "200":
+          description: Sell analysis completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SellAnalysisResponse"
+        "400":
+          $ref: "#/components/responses/ValidationErrorResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+
+  /api/portfolio/scenarios:
+    post:
+      tags: [Portfolio]
+      summary: Build scenario projection
+      description: >
+        Calculates conservative, moderate, and aggressive future-value scenarios,
+        with optional inflation adjustment.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScenarioRequest"
+            example:
+              principal: 100000
+              years: 5
+              includeInflation: true
+              inflationRate: 6
+      responses:
+        "200":
+          description: Scenario projection completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScenarioResponse"
+        "400":
+          $ref: "#/components/responses/ValidationErrorResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    StockIdParam:
+      name: stockId
+      in: path
+      required: true
+      description: Mongo ObjectId of the stock position
+      schema:
+        type: string
+    YearsParam:
+      name: years
+      in: query
+      required: false
+      description: Scenario horizon in years
+      schema:
+        type: number
+        default: 3
+        minimum: 0
+    IncludeInflationParam:
+      name: includeInflation
+      in: query
+      required: false
+      description: >
+        Whether to include inflation-adjusted values. The runtime also accepts
+        truthy string and numeric variants such as "true" and "1".
+      schema:
+        type: boolean
+        default: false
+    InflationRateParam:
+      name: inflationRate
+      in: query
+      required: false
+      description: Annual inflation percentage
+      schema:
+        type: number
+        default: 6
+        minimum: 0
+
+  responses:
+    UnauthorizedResponse:
+      description: Missing or invalid bearer token
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            missingToken:
+              value:
+                success: false
+                error:
+                  code: AUTH_TOKEN_MISSING
+                  message: Authentication token is required
+            invalidToken:
+              value:
+                success: false
+                error:
+                  code: AUTH_TOKEN_INVALID
+                  message: Authentication token is invalid
+    ValidationErrorResponse:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            error:
+              code: VALIDATION_ERROR
+              message: Validation failed
+              details:
+                - field: quantity
+                  code: QUANTITY_INVALID
+    EmailConflictResponse:
+      description: Email already exists
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            error:
+              code: EMAIL_ALREADY_IN_USE
+              message: Email is already registered
+    InvalidCredentialsResponse:
+      description: Invalid credentials
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            error:
+              code: INVALID_CREDENTIALS
+              message: Email or password is incorrect
+    StockNotFoundResponse:
+      description: Stock not found or not owned by the authenticated user
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            error:
+              code: STOCK_NOT_FOUND
+              message: Stock position was not found
+
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        data:
+          type: object
+          properties:
+            service:
+              type: string
+              example: stock-insights
+            status:
+              type: string
+              example: ok
+          required: [service, status]
+      required: [success, data]
+
+    ErrorDetail:
+      type: object
+      properties:
+        field:
+          type: string
+        code:
+          type: string
+      required: [field, code]
+
+    ErrorObject:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            $ref: "#/components/schemas/ErrorDetail"
+      required: [code, message]
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum: [false]
+        error:
+          $ref: "#/components/schemas/ErrorObject"
+      required: [success, error]
+
+    SignupRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+      required: [name, email, password]
+
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+      required: [email, password]
+
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [_id, name, email, createdAt, updatedAt]
+
+    AuthData:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        token:
+          type: string
+      required: [user, token]
+
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        data:
+          $ref: "#/components/schemas/AuthData"
+      required: [success, data]
+
+    CreateStockRequest:
+      type: object
+      properties:
+        symbol:
+          type: string
+          description: 1-15 characters; letters plus optional dot or hyphen
+          pattern: "^[A-Za-z.\\-]{1,15}$"
+        quantity:
+          type: number
+          minimum: 0
+          exclusiveMinimum: true
+        buyPrice:
+          type: number
+          minimum: 0
+          exclusiveMinimum: true
+        buyDate:
+          type: string
+          format: date
+        currentPrice:
+          type: number
+          nullable: true
+          minimum: 0
+          exclusiveMinimum: true
+        note:
+          type: string
+          nullable: true
+      required: [symbol, quantity, buyPrice, buyDate]
+
+    UpdateStockRequest:
+      type: object
+      properties:
+        symbol:
+          type: string
+          pattern: "^[A-Za-z.\\-]{1,15}$"
+        quantity:
+          type: number
+          minimum: 0
+          exclusiveMinimum: true
+        buyPrice:
+          type: number
+          minimum: 0
+          exclusiveMinimum: true
+        buyDate:
+          type: string
+          format: date
+        currentPrice:
+          type: number
+          nullable: true
+          minimum: 0
+          exclusiveMinimum: true
+        note:
+          type: string
+          nullable: true
+
+    StockPosition:
+      type: object
+      properties:
+        _id:
+          type: string
+        user:
+          type: string
+        symbol:
+          type: string
+        quantity:
+          type: number
+        buyPrice:
+          type: number
+        buyDate:
+          type: string
+          format: date-time
+        currentPrice:
+          type: number
+          nullable: true
+        note:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - _id
+        - user
+        - symbol
+        - quantity
+        - buyPrice
+        - buyDate
+        - createdAt
+        - updatedAt
+
+    StockListItem:
+      allOf:
+        - $ref: "#/components/schemas/StockPosition"
+        - type: object
+          properties:
+            __v:
+              type: integer
+
+    StockResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        data:
+          $ref: "#/components/schemas/StockPosition"
+      required: [success, data]
+
+    StockListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/StockListItem"
+      required: [success, data]
+
+    DeleteStockResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        data:
+          type: object
+          properties:
+            deleted:
+              type: boolean
+              enum: [true]
+            stockId:
+              type: string
+          required: [deleted, stockId]
+      required: [success, data]
+
+    QueryOptions:
+      type: object
+      properties:
+        years:
+          type: number
+        includeInflation:
+          type: boolean
+        inflationRatePct:
+          type: number
+          nullable: true
+      required: [years, includeInflation, inflationRatePct]
+
+    AllocationEntry:
+      type: object
+      properties:
+        symbol:
+          type: string
+        allocationPct:
+          type: number
+      required: [symbol, allocationPct]
+
+    SummaryMetrics:
+      type: object
+      properties:
+        totalInvestment:
+          type: number
+        totalCurrentValue:
+          type: number
+        totalProfitLoss:
+          type: number
+        totalProfitLossPct:
+          type: number
+        holdingsCount:
+          type: integer
+        allocation:
+          type: array
+          items:
+            $ref: "#/components/schemas/AllocationEntry"
+      required:
+        - totalInvestment
+        - totalCurrentValue
+        - totalProfitLoss
+        - totalProfitLossPct
+        - holdingsCount
+        - allocation
+
+    SummaryMetricsWithExplanation:
+      allOf:
+        - $ref: "#/components/schemas/SummaryMetrics"
+        - type: object
+          properties:
+            explanation:
+              type: string
+              nullable: true
+
+    PriceSnapshot:
+      type: object
+      properties:
+        buyPrice:
+          type: number
+        currentPrice:
+          type: number
+      required: [buyPrice, currentPrice]
+
+    HoldingSnapshot:
+      type: object
+      properties:
+        buyDate:
+          type: string
+          format: date-time
+        holdingDays:
+          type: integer
+      required: [buyDate, holdingDays]
+
+    PositionMetrics:
+      type: object
+      properties:
+        investedAmount:
+          type: number
+        currentValue:
+          type: number
+        profitLoss:
+          type: number
+        profitLossPct:
+          type: number
+        allocationPct:
+          type: number
+      required:
+        - investedAmount
+        - currentValue
+        - profitLoss
+        - profitLossPct
+        - allocationPct
+
+    ScenarioProjectionScenario:
+      type: object
+      properties:
+        name:
+          type: string
+          enum: [conservative, moderate, aggressive]
+        annualRatePct:
+          type: number
+        nominalFutureValue:
+          type: number
+        inflationAdjustedFutureValue:
+          type: number
+          nullable: true
+      required: [name, annualRatePct, nominalFutureValue, inflationAdjustedFutureValue]
+
+    ScenarioProjectionRange:
+      type: object
+      properties:
+        nominalMin:
+          type: number
+        nominalMax:
+          type: number
+        inflationAdjustedMin:
+          type: number
+          nullable: true
+        inflationAdjustedMax:
+          type: number
+          nullable: true
+      required: [nominalMin, nominalMax, inflationAdjustedMin, inflationAdjustedMax]
+
+    ScenarioProjection:
+      type: object
+      properties:
+        principal:
+          type: number
+        years:
+          type: number
+        includeInflation:
+          type: boolean
+        inflationRatePct:
+          type: number
+          nullable: true
+        scenarios:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScenarioProjectionScenario"
+        range:
+          $ref: "#/components/schemas/ScenarioProjectionRange"
+      required:
+        - principal
+        - years
+        - includeInflation
+        - inflationRatePct
+        - scenarios
+        - range
+
+    SellAnalysisRequest:
+      type: object
+      properties:
+        buyPrice:
+          type: number
+          minimum: 0
+          exclusiveMinimum: true
+        quantity:
+          type: number
+          minimum: 0
+          exclusiveMinimum: true
+        currentPrice:
+          type: number
+          minimum: 0
+          exclusiveMinimum: true
+        holdingDurationDays:
+          type: number
+          minimum: 0
+      required: [buyPrice, quantity, currentPrice, holdingDurationDays]
+
+    SellAnalysis:
+      type: object
+      properties:
+        inputs:
+          type: object
+          properties:
+            buyPrice:
+              type: number
+            quantity:
+              type: number
+            currentPrice:
+              type: number
+            holdingDurationDays:
+              type: number
+          required: [buyPrice, quantity, currentPrice, holdingDurationDays]
+        metrics:
+          type: object
+          properties:
+            totalInvestment:
+              type: number
+            currentValue:
+              type: number
+            profitLoss:
+              type: number
+            profitLossPct:
+              type: number
+          required: [totalInvestment, currentValue, profitLoss, profitLossPct]
+        classification:
+          type: object
+          properties:
+            holdingType:
+              type: string
+              enum: [short_term, long_term]
+            thresholdDays:
+              type: number
+          required: [holdingType, thresholdDays]
+        suggestion:
+          type: object
+          properties:
+            code:
+              type: string
+            reasonCodes:
+              type: array
+              items:
+                type: string
+          required: [code, reasonCodes]
+        signals:
+          type: object
+          properties:
+            profitable:
+              type: boolean
+            lossMaking:
+              type: boolean
+          required: [profitable, lossMaking]
+      required: [inputs, metrics, classification, suggestion, signals]
+
+    SellAnalysisResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        data:
+          $ref: "#/components/schemas/SellAnalysis"
+      required: [success, data]
+
+    ScenarioRequest:
+      type: object
+      properties:
+        principal:
+          type: number
+          minimum: 0
+          exclusiveMinimum: true
+        years:
+          type: number
+          minimum: 0
+          exclusiveMinimum: true
+        includeInflation:
+          type: boolean
+        inflationRate:
+          type: number
+          minimum: 0
+      required: [principal, years]
+
+    ScenarioResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        data:
+          $ref: "#/components/schemas/ScenarioProjection"
+      required: [success, data]
+
+    PortfolioSummaryPosition:
+      type: object
+      properties:
+        stockId:
+          type: string
+        symbol:
+          type: string
+        quantity:
+          type: number
+        note:
+          type: string
+          nullable: true
+        prices:
+          $ref: "#/components/schemas/PriceSnapshot"
+        holding:
+          $ref: "#/components/schemas/HoldingSnapshot"
+        metrics:
+          $ref: "#/components/schemas/PositionMetrics"
+        sellAnalysis:
+          $ref: "#/components/schemas/SellAnalysis"
+        scenarioProjection:
+          $ref: "#/components/schemas/ScenarioProjection"
+      required:
+        - stockId
+        - symbol
+        - quantity
+        - note
+        - prices
+        - holding
+        - metrics
+        - sellAnalysis
+        - scenarioProjection
+
+    PortfolioSummaryPayload:
+      type: object
+      properties:
+        options:
+          $ref: "#/components/schemas/QueryOptions"
+        summary:
+          $ref: "#/components/schemas/SummaryMetrics"
+        portfolioScenarioProjection:
+          $ref: "#/components/schemas/ScenarioProjection"
+        positions:
+          type: array
+          items:
+            $ref: "#/components/schemas/PortfolioSummaryPosition"
+      required: [options, summary, portfolioScenarioProjection, positions]
+
+    PortfolioSummaryResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        data:
+          $ref: "#/components/schemas/PortfolioSummaryPayload"
+      required: [success, data]
+
+    SentimentPayload:
+      type: object
+      properties:
+        symbol:
+          type: string
+        headlines:
+          type: array
+          items:
+            $ref: "#/components/schemas/SentimentHeadline"
+        sentiment:
+          type: object
+          properties:
+            label:
+              type: string
+            score:
+              type: number
+          required: [label, score]
+        aggregate:
+          type: object
+          properties:
+            headlineCount:
+              type: integer
+            totalHeadlineScore:
+              type: number
+            averageHeadlineScore:
+              type: number
+          required: [headlineCount, totalHeadlineScore, averageHeadlineScore]
+        source:
+          type: object
+          properties:
+            service:
+              type: string
+            status:
+              type: string
+            reasonCode:
+              type: string
+          required: [service, status]
+      required: [symbol, sentiment, aggregate, source, headlines]
+
+    SentimentHeadline:
+      type: object
+      properties:
+        text:
+          type: string
+        sentiment:
+          type: object
+          properties:
+            label:
+              type: string
+            score:
+              type: number
+          required: [label, score]
+      required: [text, sentiment]
+
+    ScoreWeights:
+      type: object
+      properties:
+        technicalScore:
+          type: number
+        fundamentalScore:
+          type: number
+        sentimentScore:
+          type: number
+        portfolioSignals:
+          type: number
+      required: [technicalScore, fundamentalScore, sentimentScore, portfolioSignals]
+
+    ScoreScale:
+      type: object
+      properties:
+        min:
+          type: number
+        max:
+          type: number
+      required: [min, max]
+
+    PortfolioSignals:
+      type: object
+      properties:
+        score:
+          type: number
+        signalCodes:
+          type: array
+          items:
+            type: string
+        overexposureSeverity:
+          type: string
+          nullable: true
+          enum: [moderate_overexposure, high_overexposure]
+        overexposurePenalty:
+          type: number
+      required: [score, signalCodes, overexposureSeverity, overexposurePenalty]
+
+    ScoringBreakdown:
+      type: object
+      properties:
+        technicalScore:
+          type: number
+        fundamentalScore:
+          type: number
+        sentimentScore:
+          type: number
+        portfolioSignals:
+          $ref: "#/components/schemas/PortfolioSignals"
+        defaultWeights:
+          $ref: "#/components/schemas/ScoreWeights"
+        weights:
+          $ref: "#/components/schemas/ScoreWeights"
+        weightAdjustments:
+          type: array
+          items:
+            type: string
+        normalizedScores:
+          $ref: "#/components/schemas/ScoreWeights"
+        weightedScores:
+          $ref: "#/components/schemas/ScoreWeights"
+        scoreScale:
+          $ref: "#/components/schemas/ScoreScale"
+        finalScore:
+          type: number
+      required:
+        - technicalScore
+        - fundamentalScore
+        - sentimentScore
+        - portfolioSignals
+        - defaultWeights
+        - weights
+        - weightAdjustments
+        - normalizedScores
+        - weightedScores
+        - scoreScale
+        - finalScore
+
+    InsightPosition:
+      type: object
+      properties:
+        stockId:
+          type: string
+        symbol:
+          type: string
+        quantity:
+          type: number
+        prices:
+          $ref: "#/components/schemas/PriceSnapshot"
+        holding:
+          $ref: "#/components/schemas/HoldingSnapshot"
+        metrics:
+          $ref: "#/components/schemas/PositionMetrics"
+        confidenceLabel:
+          type: string
+          nullable: true
+        explanations:
+          type: array
+          items:
+            type: string
+        sellAnalysis:
+          $ref: "#/components/schemas/SellAnalysis"
+        scenarioProjection:
+          $ref: "#/components/schemas/ScenarioProjection"
+        sentiment:
+          $ref: "#/components/schemas/SentimentPayload"
+        scoring:
+          $ref: "#/components/schemas/ScoringBreakdown"
+      required:
+        - stockId
+        - symbol
+        - quantity
+        - prices
+        - holding
+        - metrics
+        - confidenceLabel
+        - explanations
+        - sellAnalysis
+        - scenarioProjection
+        - sentiment
+        - scoring
+
+    RankingItem:
+      type: object
+      properties:
+        stockId:
+          type: string
+        symbol:
+          type: string
+        allocationPct:
+          type: number
+        profitLossPct:
+          type: number
+        currentValue:
+          type: number
+        finalScore:
+          type: number
+        sentimentLabel:
+          type: string
+        suggestionCode:
+          type: string
+        signalCodes:
+          type: array
+          items:
+            type: string
+      required:
+        - stockId
+        - symbol
+        - allocationPct
+        - profitLossPct
+        - currentValue
+        - finalScore
+        - sentimentLabel
+        - suggestionCode
+        - signalCodes
+
+    OverexposureRankingItem:
+      allOf:
+        - $ref: "#/components/schemas/RankingItem"
+        - type: object
+          properties:
+            severity:
+              type: string
+            overexposureSeverity:
+              type: string
+            overexposurePenalty:
+              type: number
+          required: [severity, overexposureSeverity, overexposurePenalty]
+
+    Rankings:
+      type: object
+      properties:
+        topPerformers:
+          type: array
+          items:
+            $ref: "#/components/schemas/RankingItem"
+        worstPerformers:
+          type: array
+          items:
+            $ref: "#/components/schemas/RankingItem"
+        overexposure:
+          type: array
+          items:
+            $ref: "#/components/schemas/OverexposureRankingItem"
+      required: [topPerformers, worstPerformers, overexposure]
+
+    PortfolioInsightsPayload:
+      type: object
+      properties:
+        options:
+          $ref: "#/components/schemas/QueryOptions"
+        portfolioSummary:
+          $ref: "#/components/schemas/SummaryMetricsWithExplanation"
+        portfolioScenarioProjection:
+          $ref: "#/components/schemas/ScenarioProjection"
+        rankings:
+          $ref: "#/components/schemas/Rankings"
+        positions:
+          type: array
+          items:
+            $ref: "#/components/schemas/InsightPosition"
+      required:
+        - options
+        - portfolioSummary
+        - portfolioScenarioProjection
+        - rankings
+        - positions
+
+    PortfolioInsightsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        data:
+          $ref: "#/components/schemas/PortfolioInsightsPayload"
+      required: [success, data]
