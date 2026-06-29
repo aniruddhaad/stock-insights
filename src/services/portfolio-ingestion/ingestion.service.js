@@ -381,9 +381,29 @@ async function findExistingTransactionIds(userId, transactions) {
   return new Set(existing.map((transaction) => `${transaction.broker}:${transaction.externalTransactionId}`));
 }
 
+function getImportFileExtension(payload = {}) {
+  const explicitExtension = String(payload.fileExtension || "").replace(/^\./, "").toLowerCase();
+
+  if (explicitExtension) {
+    return explicitExtension;
+  }
+
+  const match = String(payload.fileName || "").toLowerCase().match(/\.([^.]+)$/);
+  return match ? match[1] : "csv";
+}
+
+function isSamcoExcelImport(payload = {}) {
+  return String(payload.provider || "").toLowerCase() === "samco" && ["xlsx", "xls"].includes(getImportFileExtension(payload));
+}
+
 async function previewCsvImport(userId, payload) {
   const provider = getCsvProvider(payload.provider || "generic");
-  const rows = provider.parse(payload.csv || payload.csvContent || "");
+  const rows = provider.parse(payload.fileContent || payload.csv || payload.csvContent || "", {
+    fileEncoding: payload.fileEncoding,
+    fileExtension: getImportFileExtension(payload),
+    fileName: payload.fileName,
+    fileType: payload.fileType
+  });
   const normalizedRows = provider.normalize(rows, { userId: toUserObjectId(userId) });
   const existingIds = await findExistingTransactionIds(userId, normalizedRows);
 
@@ -407,6 +427,19 @@ async function importCsv(userId, payload) {
     throw new ApiError(400, "IMPORT_HAS_INVALID_ROWS", "CSV contains malformed rows", preview.rows);
   }
 
+  let removedBootstrapTransactions = 0;
+
+  if (isSamcoExcelImport(payload) && preview.validRows > 0) {
+    const deletion = await Transaction.deleteMany({
+      user: userId,
+      broker: "samco",
+      source: "BROKER_HOLDING_BOOTSTRAP",
+      synthetic: true,
+      bootstrapImport: true
+    });
+    removedBootstrapTransactions = deletion.deletedCount || 0;
+  }
+
   if (importable.length > 0) {
     await Transaction.insertMany(importable, { ordered: false });
   }
@@ -414,6 +447,7 @@ async function importCsv(userId, payload) {
   return {
     ...preview,
     imported: importable.length,
+    removedBootstrapTransactions,
     skippedDuplicates: preview.duplicates
   };
 }

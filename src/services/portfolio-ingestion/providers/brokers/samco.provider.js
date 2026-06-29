@@ -237,6 +237,16 @@ function summarizeTradeDates(rows) {
   };
 }
 
+function summarizeOrderStatuses(rows) {
+  return rows.reduce((summary, row) => {
+    const status = String(row.orderStatus || row.exchangeOrderStatus || row.status || "unknown")
+      .trim()
+      .toLowerCase();
+    summary[status || "unknown"] = (summary[status || "unknown"] || 0) + 1;
+    return summary;
+  }, {});
+}
+
 function getPayloadMessage(payload) {
   if (!payload || typeof payload !== "object") {
     return "";
@@ -838,8 +848,11 @@ class SamcoBrokerProvider extends PortfolioIngestionProvider {
       duplicateExternalIds: 0
     };
 
-    for (const row of [...tradeBookRows.map((row) => ({ ...row, samcoSource: "tradeBook" })), ...orderBookRows.map((row) => ({ ...row, samcoSource: "orderBook" }))]) {
-      const normalized = this.toTransactionRow(row);
+    // Trade Book is Samco's authoritative record of executions. Order Book rows
+    // are retained above for status/metadata visibility, but never become
+    // portfolio BUY/SELL transactions (including completed orders).
+    for (const row of tradeBookRows) {
+      const normalized = this.toTransactionRow({ ...row, samcoSource: "tradeBook" });
 
       if (!normalized) {
         counters.skippedByRowMapping += 1;
@@ -864,6 +877,7 @@ class SamcoBrokerProvider extends PortfolioIngestionProvider {
     this.log("sync fetch transactions end", {
       tradeBookRows: tradeBookRows.length,
       orderBookRows: orderBookRows.length,
+      orderBookStatuses: summarizeOrderStatuses(orderBookRows),
       normalizedRows: rows.length,
       ...counters,
       normalizedPreview: rows.slice(0, 2).map(compactTransactionPreview)
@@ -893,11 +907,17 @@ class SamcoBrokerProvider extends PortfolioIngestionProvider {
 
   toTransactionRow(row) {
     const source = row.samcoSource || "tradeBook";
+
+    // An execution must exist in Trade Book before it can affect the portfolio.
+    // Order Book remains useful to callers for order state and metadata only.
+    if (source === "orderBook") {
+      return null;
+    }
+
     const filledQuantity = parseNumber(row.filledQuantity);
     const quantity = parseNumber(row.quantity || row.totalQuantity || row.totalQuanity);
     const transactionType = row.transactionType || row.buySell;
     const price = parseNumber(row.tradePrice || row.fillPrice || row.filledPrice || row.averagePrice || row.orderPrice);
-    const orderStatus = String(row.orderStatus || row.exchangeOrderStatus || row.status || "").toLowerCase();
     const symbol = normalizeSymbol(row.tradingSymbol || row.symbolName || row.symbol);
 
     if (!symbol) {
@@ -930,10 +950,6 @@ class SamcoBrokerProvider extends PortfolioIngestionProvider {
         source,
         rowPreview: sanitizeForDebug(row)
       });
-    }
-
-    if (source === "orderBook" && !["executed", "complete", "completed"].includes(orderStatus)) {
-      return null;
     }
 
     if (!price || price <= 0) {

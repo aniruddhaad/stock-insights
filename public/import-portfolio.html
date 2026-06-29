@@ -20,7 +20,7 @@
         <div class="page-heading d-flex flex-column flex-lg-row justify-content-between gap-3 align-items-lg-center">
           <div>
             <h1 class="h2 mb-2">Import Portfolio</h1>
-            <p class="text-secondary mb-0">Upload a trade CSV and preview normalized transactions before import.</p>
+            <p class="text-secondary mb-0">Upload a trade file and preview normalized transactions before import.</p>
           </div>
           <a class="btn btn-outline-secondary" href="/broker-connections">Broker sync</a>
         </div>
@@ -32,16 +32,16 @@
           <form id="importForm" novalidate>
             <div class="row g-3 align-items-end">
               <div class="col-md-4">
-                <label class="form-label" for="provider">CSV format</label>
+                <label class="form-label" for="provider">Import format</label>
                 <select class="form-select" id="provider" name="provider">
                   <option value="generic">Generic CSV</option>
-                  <option value="samco">Samco export</option>
+                  <option value="samco">Samco Export</option>
                   <option value="zerodha">Zerodha export</option>
                 </select>
               </div>
               <div class="col-md-5">
-                <label class="form-label" for="csvFile">CSV file</label>
-                <input class="form-control" id="csvFile" name="csvFile" type="file" accept=".csv,text/csv" required />
+                <label class="form-label" for="importFile">Import File</label>
+                <input class="form-control" id="importFile" name="importFile" type="file" accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" required />
               </div>
               <div class="col-md-3 d-grid">
                 <button class="btn btn-primary" id="previewButton" type="submit">Preview import</button>

@@ -14,19 +14,38 @@
   let lastPayload = null;
 
   app.showFlash(flashContainer);
-  previewContainer.innerHTML = app.createEmptyMarkup("Choose a CSV file to see normalized transactions.");
+  previewContainer.innerHTML = app.createEmptyMarkup("Choose an import file to see normalized transactions.");
 
-  function readFile(file) {
+  function readTextFile(file) {
     return new Promise(function resolveFile(resolve, reject) {
       const reader = new window.FileReader();
       reader.onload = function handleLoad() {
         resolve(String(reader.result || ""));
       };
       reader.onerror = function handleError() {
-        reject(new Error("Unable to read CSV file"));
+        reject(new Error("Unable to read import file"));
       };
       reader.readAsText(file);
     });
+  }
+
+  function readBase64File(file) {
+    return new Promise(function resolveFile(resolve, reject) {
+      const reader = new window.FileReader();
+      reader.onload = function handleLoad() {
+        const result = String(reader.result || "");
+        resolve(result.slice(result.indexOf(",") + 1));
+      };
+      reader.onerror = function handleError() {
+        reject(new Error("Unable to read import file"));
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function getFileExtension(file) {
+    const match = String(file.name || "").toLowerCase().match(/\.([^.]+)$/);
+    return match ? match[1] : "";
   }
 
   function renderPreview(preview) {
@@ -34,7 +53,7 @@
 
     if (rows.length === 0) {
       commitButton.classList.add("d-none");
-      previewContainer.innerHTML = app.createEmptyMarkup("No transactions were found in this CSV.");
+      previewContainer.innerHTML = app.createEmptyMarkup("No transactions were found in this file.");
       return;
     }
 
@@ -87,19 +106,31 @@
   importForm.addEventListener("submit", async function handlePreview(event) {
     event.preventDefault();
 
-    const file = document.getElementById("csvFile").files[0];
+    const file = document.getElementById("importFile").files[0];
 
     if (!file) {
-      app.renderAlert(importStatus, "warning", "Select a CSV file first.");
+      app.renderAlert(importStatus, "warning", "Select an import file first.");
       return;
     }
 
     try {
       app.setButtonLoading(previewButton, true, "Parsing...");
-      const csv = await readFile(file);
+      const fileExtension = getFileExtension(file);
+      const isExcel = fileExtension === "xlsx" || fileExtension === "xls";
+      const provider = document.getElementById("provider").value;
+
+      if (isExcel && provider !== "samco") {
+        throw new Error("Excel workbooks are supported for the Samco Export format.");
+      }
+
+      const fileContent = isExcel ? await readBase64File(file) : await readTextFile(file);
       lastPayload = {
-        provider: document.getElementById("provider").value,
-        csv: csv,
+        provider: provider,
+        fileContent: fileContent,
+        fileEncoding: isExcel ? "base64" : "utf8",
+        fileExtension: fileExtension,
+        fileName: file.name,
+        fileType: file.type,
         allowPartial: true
       };
       const preview = await app.apiFetch("/import/portfolio", {
@@ -132,7 +163,10 @@
           mode: "commit"
         }
       });
-      app.renderAlert(importStatus, "success", "Imported " + result.imported + " transactions.");
+      const removed = Number(result.removedBootstrapTransactions || 0);
+      const message = "Imported " + result.imported + " transactions." +
+        (removed > 0 ? " Removed " + removed + " synthetic Samco bootstrap transactions." : "");
+      app.renderAlert(importStatus, "success", message);
       renderPreview(result);
     } catch (error) {
       app.renderAlert(importStatus, "danger", app.extractErrorMessage(error));

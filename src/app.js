@@ -9,8 +9,8 @@ const app = express();
 const publicDir = path.join(__dirname, "..", "public");
 
 app.use(cors());
-app.use(express.json({ limit: "2mb" }));
-app.use(express.urlencoded({ extended: false, limit: "2mb" }));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: false, limit: "10mb" }));
 
 app.use("/api", routes);
 app.use(express.static(publicDir, { extensions: ["html"] }));
