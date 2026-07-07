@@ -10,30 +10,6 @@ function classifyHoldingPeriod(holdingDurationDays) {
   return Number(holdingDurationDays) >= env.longTermHoldingDays ? "long_term" : "short_term";
 }
 
-function buildSuggestion(holdingType, profitLossPct, signals) {
-  const longTermProfitThreshold = 20;
-  const shortTermProfitThreshold = 12;
-  const shouldBookProfit =
-    (holdingType === "short_term" && profitLossPct >= shortTermProfitThreshold) ||
-    (holdingType === "long_term" && profitLossPct >= longTermProfitThreshold);
-
-  if (holdingType === "unknown") {
-    return {
-      code: "review_holding_period",
-      reasonCodes: [...signals, "holding_period_unknown"]
-    };
-  }
-
-  return {
-    code: shouldBookProfit ? "booking_profit" : "hold_for_long_term",
-    reasonCodes: shouldBookProfit
-      ? [...signals, "profit_target_reached"]
-      : holdingType === "long_term"
-        ? [...signals, "long_term_window_active"]
-        : [...signals, "monitor_position"]
-  };
-}
-
 function resolveHoldingInputs({ acquisitionDate, holdingDurationDays, holdingType }, asOfDate = new Date()) {
   if (acquisitionDate) {
     return buildHoldingPeriod(acquisitionDate, asOfDate, {
@@ -107,7 +83,12 @@ function analyzeSell({ buyPrice, quantity, currentPrice, acquisitionDate, holdin
       holdingType: resolvedHoldingType,
       thresholdDays: env.longTermHoldingDays
     },
-    suggestion: buildSuggestion(resolvedHoldingType, profitLossPct, signals),
+    // Shape retained for compatibility, but no action is selected here. The
+    // decision engine is the only layer allowed to populate `code`.
+    suggestion: {
+      code: null,
+      reasonCodes: [...signals]
+    },
     signals: {
       profitable: profitLoss > 0,
       lossMaking: profitLoss < 0

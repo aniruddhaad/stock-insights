@@ -1,13 +1,16 @@
 const { buildPortfolioSummary } = require("./portfolio.service");
 const { buildScoreBreakdown } = require("./scoring.service");
 const { getSentiment } = require("./sentiment-client.service");
-const {
-  buildPositionExplanationDetails,
-  buildPortfolioSummaryExplanation
-} = require("./explanation.service");
 const { getOverexposureProfile } = require("../utils/overexposure");
+const {
+  buildPortfolioDecision,
+  buildPortfolioSummaryExplanation,
+  toLegacySuggestion
+} = require("./portfolio-decision.service");
 
 function toRankedPosition(position) {
+  const decision = position.decision || buildPortfolioDecision(position);
+
   return {
     stockId: position.stockId,
     symbol: position.symbol,
@@ -16,7 +19,11 @@ function toRankedPosition(position) {
     currentValue: position.metrics.currentValue,
     finalScore: position.scoring.finalScore,
     sentimentLabel: position.sentiment.sentiment.label,
-    suggestionCode: position.sellAnalysis.suggestion.code,
+    suggestionCode: toLegacySuggestion(
+      decision,
+      position.sellAnalysis && position.sellAnalysis.suggestion
+    ).code,
+    portfolioActionCode: decision.portfolioAction.code,
     signalCodes: position.scoring.portfolioSignals.signalCodes
   };
 }
@@ -68,7 +75,7 @@ function buildDecisionPayload({ summary, portfolioScenarioProjection, positions,
     .slice(0, 3);
   const portfolioSummaryExplanation =
     (summary && summary.explanation) ||
-    buildPortfolioSummaryExplanation({ summary, portfolioScenarioProjection, positions });
+    buildPortfolioSummaryExplanation({ summary, positions });
 
   return {
     options,
@@ -95,8 +102,11 @@ function buildDecisionPayload({ summary, portfolioScenarioProjection, positions,
         })
     },
     positions: positions.map((position) => {
-      const explanationDetails = buildPositionExplanationDetails(position);
-
+      const decision = position.decision || buildPortfolioDecision(position);
+      const alignedSellAnalysis = {
+        ...position.sellAnalysis,
+        suggestion: toLegacySuggestion(decision, position.sellAnalysis && position.sellAnalysis.suggestion)
+      };
       return {
         stockId: position.stockId,
         symbol: position.symbol,
@@ -104,12 +114,17 @@ function buildDecisionPayload({ summary, portfolioScenarioProjection, positions,
         prices: position.prices,
         holding: position.holding,
         metrics: position.metrics,
-        confidenceLabel: position.confidenceLabel || explanationDetails.confidenceLabel,
-        explanations:
-          (Array.isArray(position.explanations) && position.explanations.length > 0
-            ? position.explanations
-            : explanationDetails.explanations),
-        sellAnalysis: position.sellAnalysis,
+        investmentQuality: decision.investmentQuality,
+        portfolioAction: decision.portfolioAction,
+        confidence: decision.confidence,
+        primaryDriver: decision.primaryDriver,
+        supportingFactors: decision.supportingFactors,
+        explanation: decision.explanation,
+        decisionStage: decision.decisionStage,
+        decision,
+        confidenceLabel: decision.confidence.label,
+        explanations: [decision.explanation],
+        sellAnalysis: alignedSellAnalysis,
         scenarioProjection: position.scenarioProjection,
         sentiment: position.sentiment,
         scoring: position.scoring

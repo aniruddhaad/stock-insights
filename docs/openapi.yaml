@@ -893,6 +893,7 @@ components:
           properties:
             code:
               type: string
+              nullable: true
             reasonCodes:
               type: array
               items:
@@ -1137,6 +1138,121 @@ components:
         - scoreScale
         - finalScore
 
+    InvestmentQuality:
+      type: object
+      properties:
+        score:
+          type: number
+          minimum: 0
+          maximum: 10
+        scale:
+          type: number
+          enum: [10]
+        label:
+          type: string
+          enum: [High, Average, Low]
+      required: [score, scale, label]
+
+    PortfolioAction:
+      type: object
+      properties:
+        code:
+          type: string
+          enum: [hold, reduce_position, exit, book_partial_profits]
+        label:
+          type: string
+          enum: [Hold, Reduce Position, Exit, Book Partial Profits]
+      required: [code, label]
+
+    DecisionConfidence:
+      type: object
+      properties:
+        code:
+          type: string
+          enum: [high, medium, low]
+        label:
+          type: string
+          enum: [High, Medium, Low]
+      required: [code, label]
+
+    DecisionFactor:
+      type: object
+      properties:
+        code:
+          type: string
+        label:
+          type: string
+        type:
+          type: string
+          enum: [primary, supporting]
+      required: [code, label, type]
+
+    DecisionEvidence:
+      type: object
+      properties:
+        investmentQuality:
+          $ref: "#/components/schemas/InvestmentQuality"
+        technicalTrend:
+          type: string
+        momentum:
+          type: string
+        sentiment:
+          type: string
+        news:
+          type: string
+        analystConsensus:
+          type: string
+        valuation:
+          type: string
+        portfolioAllocationPct:
+          type: number
+        sectorAllocationPct:
+          type: number
+          nullable: true
+        topHoldingsAllocationPct:
+          type: number
+          nullable: true
+        concentrationRisk:
+          type: boolean
+        concentrationReasons:
+          type: array
+          items:
+            type: string
+        unrealizedGainPct:
+          type: number
+
+    PortfolioDecision:
+      type: object
+      properties:
+        investmentQuality:
+          $ref: "#/components/schemas/InvestmentQuality"
+        portfolioAction:
+          $ref: "#/components/schemas/PortfolioAction"
+        confidence:
+          $ref: "#/components/schemas/DecisionConfidence"
+        primaryDriver:
+          $ref: "#/components/schemas/DecisionFactor"
+        supportingFactors:
+          type: array
+          items:
+            $ref: "#/components/schemas/DecisionFactor"
+        evidence:
+          $ref: "#/components/schemas/DecisionEvidence"
+        explanation:
+          type: string
+        decisionStage:
+          type: string
+          enum: [portfolio_risk, investment_health, valuation_profit_taking, long_term_compounder]
+      required:
+        - investmentQuality
+        - portfolioAction
+        - confidence
+        - primaryDriver
+        - supportingFactors
+        - evidence
+        - explanation
+        - decisionStage
+
     InsightPosition:
       type: object
       properties:
@@ -1152,11 +1268,32 @@ components:
           $ref: "#/components/schemas/HoldingSnapshot"
         metrics:
           $ref: "#/components/schemas/PositionMetrics"
+        investmentQuality:
+          $ref: "#/components/schemas/InvestmentQuality"
+        portfolioAction:
+          $ref: "#/components/schemas/PortfolioAction"
+        confidence:
+          $ref: "#/components/schemas/DecisionConfidence"
+        primaryDriver:
+          $ref: "#/components/schemas/DecisionFactor"
+        supportingFactors:
+          type: array
+          items:
+            $ref: "#/components/schemas/DecisionFactor"
+        explanation:
+          type: string
+        decisionStage:
+          type: string
+          enum: [portfolio_risk, investment_health, valuation_profit_taking, long_term_compounder]
+        decision:
+          $ref: "#/components/schemas/PortfolioDecision"
         confidenceLabel:
           type: string
           nullable: true
         explanations:
           type: array
+          minItems: 1
+          maxItems: 1
           items:
             type: string
         sellAnalysis:
@@ -1174,6 +1311,14 @@ components:
         - prices
         - holding
         - metrics
+        - investmentQuality
+        - portfolioAction
+        - confidence
+        - primaryDriver
+        - supportingFactors
+        - explanation
+        - decisionStage
+        - decision
         - confidenceLabel
         - explanations
         - sellAnalysis
@@ -1199,6 +1344,8 @@ components:
         sentimentLabel:
           type: string
         suggestionCode:
+          type: string
+        portfolioActionCode:
           type: string
         signalCodes:
           type: array

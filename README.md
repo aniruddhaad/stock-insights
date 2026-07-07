@@ -5,9 +5,44 @@
 - JWT-based authentication
 - User-owned stock CRUD
 - Portfolio summary and allocation analysis
-- Sell-analysis recommendations
+- Sell-analysis performance metrics
 - Scenario projections with optional inflation adjustment
 - Portfolio insights that combine portfolio signals, scoring, explanations, and rankings
+
+
+
+## Broker Integration & Portfolio Import
+
+### Why both Broker Connection and Portfolio Import?
+
+Stock Insights supports broker connectivity for retrieving portfolio holdings. During development, however, a practical limitation was identified with broker APIs: while they reliably return **current holdings**, they may not provide the complete historical transaction data required for accurate long-term portfolio analytics.
+
+Examples of information that may be incomplete or unavailable include:
+
+- Original purchase date
+- Multiple buy lots
+- Complete buy/sell transaction history
+- Accurate acquisition timeline
+
+Many portfolio analytics in this project—such as holding duration, sell analysis, scenario projections, and decision scoring—depend on accurate historical transactions rather than only current holdings.
+
+To address this, the application includes a broker-specific import pipeline.
+
+### Current Implementation
+
+**Broker Connection**
+- Connect to supported broker accounts
+- Retrieve current holdings
+- Foundation for future automated synchronization
+
+**Portfolio Import**
+- Supports importing broker transaction history using a broker-specific Excel template
+- Current implementation includes a **Samco XLSX importer**
+- Reconstructs portfolio history from transactions
+- Produces more accurate analytics than holdings-only imports
+
+This hybrid approach was intentionally chosen after evaluating real broker API responses and prioritizing correctness of portfolio analytics over incomplete automation.
+
 
 ## Quick Start
 
@@ -96,10 +131,10 @@ Portfolio insights follow this pipeline:
 
 ```mermaid
 flowchart LR
-  A["Data"] --> B["Signals"]
-  B --> C["Scoring"]
-  C --> D["Explanation"]
-  D --> E["Output"]
+  A["Portfolio data"] --> B["Metric services"]
+  B --> C["Portfolio Decision Engine"]
+  C --> D["API compatibility projections"]
+  D --> E["Frontend"]
 ```
 
 ### Data
@@ -114,7 +149,7 @@ flowchart LR
 - P/L and P/L %
 - Allocation %
 - Holding duration and long-term vs short-term classification
-- Sell-analysis suggestion codes
+- Sell-analysis performance and holding-period signals
 - Overexposure severity and penalty
 - Scenario ranges for each position and the portfolio
 
@@ -131,10 +166,12 @@ These are normalized to a `0-10` scale, weighted, and combined into `finalScore`
 
 ### Explanation
 
-The API generates:
+The Portfolio Decision Engine generates:
 
-- `confidenceLabel`
-- up to 3 human-readable `explanations`
+- one action, confidence level, primary driver, and supporting-factor set
+- structured evidence
+- exactly one human-readable position `explanation`
+- compatibility fields derived from that same decision
 - a portfolio-level summary explanation
 
 ### Output
@@ -942,11 +979,9 @@ The example below is intentionally representative instead of exhaustive. Actual 
           "profitLossPct": 12.33,
           "allocationPct": 40.41
         },
-        "confidenceLabel": "strong signal",
+        "confidenceLabel": "Medium",
         "explanations": [
-          "Moderate overexposure is the strongest signal here; this is a strong signal and the 40.41% allocation carries a -0.04 portfolio penalty and adds concentration risk.",
-          "The position is long-term and profitable (+12.33%); current sell signal is to hold, and sentiment is neutral.",
-          "Inflation-adjusted projected outcomes range from ₹71,731 to ₹94,239 over 3 years (scenario-based)."
+          "This is a high-quality holding, but concentration risk outweighs the company view. Reduce the position to restore portfolio balance; the action is driven by portfolio risk, not by the gain."
         ],
         "sellAnalysis": {
           "inputs": {
@@ -1102,12 +1137,13 @@ Each array item is a fully analyzed position and contains:
 - `prices`: buy price and current price
 - `holding`: original buy date plus computed `holdingDays`
 - `metrics`: invested amount, current value, P/L, P/L %, and allocation %
-- `sellAnalysis`: structured sell recommendation output
+- `sellAnalysis`: performance/holding metrics plus a compatibility suggestion derived from `decision`
 - `scenarioProjection`: conservative/moderate/aggressive projection ranges
 - `sentiment`: external sentiment payload or neutral fallback
 - `scoring`: machine-readable scoring breakdown
-- `confidenceLabel`: human summary of the final score
-- `explanations`: up to 3 short sentences designed for interview/demo readability
+- `confidenceLabel`: compatibility alias of `decision.confidence.label`
+- `explanation`: the authoritative narrative from `decision.explanation`
+- `explanations`: a one-item compatibility array containing that same explanation
 
 Sentiment shape notes:
 
@@ -1199,33 +1235,11 @@ Where these appear:
 
 #### `confidenceLabel`
 
-Human-readable confidence derived from `finalScore`:
-
-- `>= 7` => `strong signal`
-- `<= 3` => `weak signal`
-- otherwise => `moderate signal`
+Compatibility alias of `decision.confidence.label`. Confidence is selected only by the Portfolio Decision Engine.
 
 #### `explanations`
 
-Each position gets up to 3 generated sentences:
-
-1. Lead signal sentence
-   Highlights the strongest signal first, preferring:
-   - high overexposure
-   - moderate overexposure
-   - deep drawdown
-   - strong unrealized gain
-   - neutral fallback
-
-2. Context sentence
-   Summarizes:
-   - holding type
-   - profit/loss state
-   - sell suggestion
-   - sentiment label/strength
-
-3. Scenario sentence
-   Summarizes the scenario range, using inflation-adjusted values if requested.
+Each position gets exactly one explanation from `position.decision.explanation`. The legacy `explanations` field contains only that same string for backward compatibility.
 
 #### `rankings`
 
@@ -1323,11 +1337,10 @@ Sample response:
       "thresholdDays": 365
     },
     "suggestion": {
-      "code": "booking_profit",
+      "code": null,
       "reasonCodes": [
         "position_in_profit",
-        "short_term_holding",
-        "profit_target_reached"
+        "short_term_holding"
       ]
     },
     "signals": {

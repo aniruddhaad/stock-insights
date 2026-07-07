@@ -3,3 +3,7 @@ node_modules/
 npm-debug.log*
 tests/*
 !tests/samco-star-excel.integration.js
+!tests/portfolio-decision.service.test.js
+!tests/decision-consistency.test.js
+# AI / Codex agent workspace
+.agents/

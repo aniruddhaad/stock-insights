@@ -188,10 +188,13 @@
         const metrics = position.metrics || {};
         const prices = position.prices || {};
         const holding = position.holding || {};
+        const decision = position.decision || {};
+        const portfolioAction = decision.portfolioAction || position.portfolioAction || {};
+        const decisionConfidence = decision.confidence || position.confidence || {};
         const priceSource = app.formatPriceSource(prices.dataSource);
         const priceLastUpdated = app.formatDateTime(prices.lastUpdated);
         const scoring = position.scoring || {};
-        const explanations = Array.isArray(position.explanations) ? position.explanations : [];
+        const explanation = decision.explanation || position.explanation || "";
         const overexposureSeverity =
           scoring.portfolioSignals &&
           scoring.portfolioSignals.overexposureSeverity;
@@ -201,15 +204,9 @@
           : "";
 
         const explanationMarkup =
-          explanations.length === 0
+          !explanation
             ? '<p class="mb-0 text-secondary">No explanation returned for this stock.</p>'
-            : '<ul class="mb-0">' +
-              explanations
-                .map(function mapExplanation(explanation) {
-                  return "<li>" + app.escapeHtml(explanation) + "</li>";
-                })
-                .join("") +
-              "</ul>";
+            : '<p class="mb-0 lh-lg">' + app.escapeHtml(explanation) + "</p>";
 
         return [
           '<div class="col-12">',
@@ -219,15 +216,18 @@
           "<div>",
           '<div class="d-flex align-items-center flex-wrap gap-2 mb-2">',
           '<h2 class="h4 mb-0">' + app.escapeHtml(position.symbol) + "</h2>",
+          portfolioAction.label
+            ? '<span class="badge text-bg-primary">' + app.escapeHtml(portfolioAction.label) + "</span>"
+            : "",
           '<span class="badge ' +
             app.getHoldingTypeBadgeClass(holding.holdingType) +
             '">' +
             app.escapeHtml(app.formatHoldingType(holding.holdingType)) +
             "</span>",
           '<span class="badge ' +
-            app.getConfidenceBadgeClass(position.confidenceLabel) +
+            app.getConfidenceBadgeClass(decisionConfidence.label) +
             '">' +
-            app.escapeHtml(position.confidenceLabel || "signal unavailable") +
+            app.escapeHtml(decisionConfidence.label || "signal unavailable") +
             "</span>",
           overexposureSeverity
             ? '<span class="badge ' +

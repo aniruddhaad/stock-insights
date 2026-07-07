@@ -208,6 +208,10 @@ function resolveScoreWeights(position, sentimentScore, config = scoringConfig) {
 }
 
 function getTechnicalScore(position) {
+  // TODO(scoring-calibration): these coarse P/L bands, together with the
+  // discrete holding-duration and sentiment inputs below, can cluster
+  // unrelated positions at identical final scores. Calibration is intentionally
+  // deferred because this service is metric-only in the decision refactor.
   const pnl = position.metrics.profitLossPct;
 
   if (pnl >= 20) return 4;
@@ -251,11 +255,6 @@ function getPortfolioSignals(position, config = scoringConfig) {
   if (position.metrics.profitLossPct <= -10) {
     score -= 2;
     signalCodes.push("deep_drawdown");
-  }
-
-  if (position.sellAnalysis.suggestion.code === "booking_profit") {
-    score += 1;
-    signalCodes.push("profit_booking_candidate");
   }
 
   return {
