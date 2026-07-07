@@ -1,1516 +1,923 @@
-# Stock Insights API
+# Stock Insights – Investment Analytics & Decision Support Platform
 
-`stock-insights` is an Express + MongoDB API for tracking stock positions and generating portfolio-level decision support. It covers:
+> **Full-stack Wealth Analytics & Investment Decision Platform**
 
-- JWT-based authentication
-- User-owned stock CRUD
-- Portfolio summary and allocation analysis
-- Sell-analysis performance metrics
-- Scenario projections with optional inflation adjustment
-- Portfolio insights that combine portfolio signals, scoring, explanations, and rankings
+![Node.js](https://img.shields.io/badge/Node.js-22-339933?logo=node.js&logoColor=white)
+![Express](https://img.shields.io/badge/Express-5-000000?logo=express&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
+![MongoDB](https://img.shields.io/badge/MongoDB-Database-47A248?logo=mongodb&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-blue)
+![Render](https://img.shields.io/badge/Hosted%20on-Render-7B3FE4?logo=render&logoColor=white)
+![JWT](https://img.shields.io/badge/JWT-Authentication-black?logo=jsonwebtokens)
+![OpenAPI](https://img.shields.io/badge/OpenAPI-Documentation-6BA539?logo=openapiinitiative&logoColor=white)
+**🌐 Live Demo:** https://stock-insights-8vde.onrender.com/dashboard
 
+**💻 Source Code:** https://github.com/aniruddhaad/stock-insights
 
+Stock Insights is a full-stack web application that helps investors analyze their portfolios beyond basic profit and loss. It combines portfolio analytics, allocation analysis, sell-decision support, scenario projections, broker transaction imports, and AI-assisted insights into a single platform.
 
-## Broker Integration & Portfolio Import
+---
 
-### Why both Broker Connection and Portfolio Import?
+### 🌐 Live Demo
 
-Stock Insights supports broker connectivity for retrieving portfolio holdings. During development, however, a practical limitation was identified with broker APIs: while they reliably return **current holdings**, they may not provide the complete historical transaction data required for accurate long-term portfolio analytics.
+https://stock-insights-8vde.onrender.com/dashboard
 
-Examples of information that may be incomplete or unavailable include:
+### 💻 Source Code
 
-- Original purchase date
-- Multiple buy lots
-- Complete buy/sell transaction history
-- Accurate acquisition timeline
+https://github.com/aniruddhaad/stock-insights
 
-Many portfolio analytics in this project—such as holding duration, sell analysis, scenario projections, and decision scoring—depend on accurate historical transactions rather than only current holdings.
+---
 
-To address this, the application includes a broker-specific import pipeline.
+## Technology Stack
 
-### Current Implementation
+| Layer | Technologies |
+|--------|--------------|
+| Frontend | React |
+| Backend | Node.js, Express.js |
+| Database | MongoDB |
+| Authentication | JWT |
+| API Documentation | OpenAPI, Swagger |
+| Testing | Jest |
+| Deployment | Render |
 
-**Broker Connection**
-- Connect to supported broker accounts
-- Retrieve current holdings
-- Foundation for future automated synchronization
+---
 
-**Portfolio Import**
-- Supports importing broker transaction history using a broker-specific Excel template
-- Current implementation includes a **Samco XLSX importer**
-- Reconstructs portfolio history from transactions
-- Produces more accurate analytics than holdings-only imports
+# Table of Contents
 
-This hybrid approach was intentionally chosen after evaluating real broker API responses and prioritizing correctness of portfolio analytics over incomplete automation.
+- Project Overview
+- Why Stock Insights?
+- Features
+- Architecture
+- Technology Stack
+- Broker Integration & Portfolio Import
+- Portfolio Decision Engine
+- AI-Assisted Insights
+- Project Structure
+- Getting Started
+- Environment Variables
+- API Documentation
+- OpenAPI & Swagger
+- Testing
+- Future Roadmap
+- Lessons Learned
+- License
 
+# Project Overview
 
-## Quick Start
+Most portfolio applications answer simple questions such as:
 
-```bash
-npm install
-npm run start:ai-news
-npm start
+- What is my current portfolio value?
+- What is my profit or loss?
+
+Stock Insights was created to answer more meaningful investment questions:
+
+- Which positions are contributing the most to portfolio risk?
+- Which holdings are overexposed?
+- Which positions deserve additional investment?
+- Which positions should be reduced?
+- How might my portfolio perform under different growth scenarios?
+- How does inflation affect future portfolio value?
+- What signals can be derived from historical portfolio performance?
+
+Instead of acting as a trading platform, Stock Insights focuses on **investment decision support** by combining portfolio analytics, scoring models, scenario projections, and AI-assisted explanations into a single application.
+
+# Why I Built This
+
+While exploring investment tools, I found that many portfolio applications focused primarily on displaying holdings and profit/loss.
+
+Very few attempted to explain *why* a portfolio looked healthy or unhealthy, identify concentration risks, or provide decision-oriented insights.
+
+This project began as an experiment to build a richer portfolio analytics platform capable of combining:
+
+- Portfolio analytics
+- Allocation analysis
+- Scenario projections
+- Historical transaction analysis
+- Decision-support scoring
+- AI-assisted explanations
+
+The project also became an opportunity to explore practical software architecture using React, Node.js, Express, MongoDB, REST APIs, JWT authentication, and modular backend design.
+
+# Features
+
+Stock Insights combines portfolio management, investment analytics, and decision-support capabilities into a single platform.
+
+### Portfolio Management
+
+- Secure user registration and authentication using JWT.
+- Maintain multiple stock holdings within a portfolio.
+- Add, update and remove positions.
+- Track investment amount, current value and unrealized profit/loss.
+
+### Portfolio Analytics
+
+The platform automatically calculates:
+
+- Total investment
+- Current portfolio value
+- Profit/Loss (₹ and %)
+- Portfolio allocation by holding
+- Holding duration
+- Long-term vs short-term classification
+
+### Portfolio Decision Support
+
+Rather than displaying raw numbers alone, the application evaluates each position using multiple portfolio signals and generates decision-oriented insights.
+
+Examples include:
+
+- Concentration risk
+- Allocation analysis
+- Portfolio rankings
+- Position scoring
+- AI-assisted explanations
+- Confidence indicators
+
+### Scenario Projection
+
+Estimate potential future portfolio value using multiple growth scenarios:
+
+- Conservative
+- Moderate
+- Aggressive
+
+Optional inflation adjustment provides both nominal and inflation-adjusted projections.
+
+### Broker Portfolio Import
+
+Supports importing transaction history using broker-specific Excel templates.
+
+Current implementation includes:
+
+- Samco XLSX Import
+
+The imported transaction history enables significantly richer portfolio analytics than relying solely on broker holdings APIs.
+
+### REST API
+
+The backend exposes RESTful APIs covering:
+
+- Authentication
+- Portfolio Management
+- Portfolio Analytics
+- Sell Analysis
+- Scenario Projection
+- Portfolio Insights
+
+# Architecture
+
+Stock Insights follows a layered architecture that separates presentation, business logic and persistence.
+
+```text
+                    React Frontend
+                           │
+                           ▼
+                  Express REST API
+                           │
+        ┌──────────────────┼──────────────────┐
+        ▼                  ▼                  ▼
+ Authentication      Portfolio Services   Broker Import
+        │                  │                  │
+        └──────────────┬───┴──────────────────┘
+                       ▼
+             Portfolio Decision Engine
+                       │
+        ┌──────────────┼──────────────┐
+        ▼              ▼              ▼
+ Sell Analysis   Scenario Engine   AI Insights
+                       │
+                       ▼
+                    MongoDB
 ```
 
-Main API base URL: `http://localhost:4000/api`
+The architecture intentionally keeps responsibilities separated so that each service focuses on a single concern.
 
-AI sentiment service base URL: `http://localhost:4001`
+Business logic is isolated from HTTP controllers, making the codebase easier to maintain, test and extend.
 
-Run tests:
 
-```bash
-npm test
-```
+# Technology Stack
 
-Seed demo data:
+## Frontend
 
-```bash
-npm run seed
-```
+### React
 
-Demo credentials from the seed script:
+React was chosen to build a responsive single-page application with reusable components and efficient state management.
 
-- `email`: `demo@stockinsights.dev`
-- `password`: `Demo@1234`
+---
+
+## Backend
+
+### Node.js
+
+Node.js provides an event-driven runtime that is well suited for REST APIs and asynchronous processing.
+
+### Express.js
+
+Express was selected because it provides a lightweight framework with minimal overhead while allowing the application architecture to remain modular.
+
+---
+
+## Database
+
+### MongoDB
+
+MongoDB stores portfolio holdings, users and investment-related data.
+
+Its document model fits naturally with portfolio objects and allows the schema to evolve as new analytics are introduced.
+
+---
 
 ## Authentication
 
-Protected endpoints require:
+### JWT
 
-```http
-Authorization: Bearer <jwt>
-```
-
-Tokens are returned by:
-
-- `POST /api/auth/signup`
-- `POST /api/auth/login`
-
-## Response Conventions
-
-Successful responses use:
-
-```json
-{
-  "success": true,
-  "data": {}
-}
-```
-
-Error responses use:
-
-```json
-{
-  "success": false,
-  "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "Validation failed",
-    "details": [
-      {
-        "field": "quantity",
-        "code": "QUANTITY_INVALID"
-      }
-    ]
-  }
-}
-```
-
-Common error codes:
-
-- `AUTH_TOKEN_MISSING`
-- `AUTH_TOKEN_INVALID`
-- `VALIDATION_ERROR`
-- `INVALID_CREDENTIALS`
-- `EMAIL_ALREADY_IN_USE`
-- `STOCK_NOT_FOUND`
-- `ROUTE_NOT_FOUND`
-
-## System Flow
-
-Portfolio insights follow this pipeline:
-
-```mermaid
-flowchart LR
-  A["Portfolio data"] --> B["Metric services"]
-  B --> C["Portfolio Decision Engine"]
-  C --> D["API compatibility projections"]
-  D --> E["Frontend"]
-```
-
-### Data
-
-- User-owned stock positions from MongoDB
-- Buy price, buy date, quantity, optional current price override
-- Query options such as `years`, `includeInflation`, and `inflationRate`
-- Sentiment data from `ai-news-service` or a neutral fallback if the service is unavailable
-
-### Signals
-
-- P/L and P/L %
-- Allocation %
-- Holding duration and long-term vs short-term classification
-- Sell-analysis performance and holding-period signals
-- Overexposure severity and penalty
-- Scenario ranges for each position and the portfolio
-
-### Scoring
-
-Each insight position gets a `scoring` object built from:
-
-- `technicalScore`
-- `fundamentalScore`
-- `sentimentScore`
-- `portfolioSignals`
-
-These are normalized to a `0-10` scale, weighted, and combined into `finalScore`.
-
-### Explanation
-
-The Portfolio Decision Engine generates:
-
-- one action, confidence level, primary driver, and supporting-factor set
-- structured evidence
-- exactly one human-readable position `explanation`
-- compatibility fields derived from that same decision
-- a portfolio-level summary explanation
-
-### Output
-
-`GET /api/portfolio/insights` returns:
-
-- `portfolioSummary`
-- `portfolioScenarioProjection`
-- `rankings`
-- `positions[]`
-
-## API Reference
-
-The deep-dive below emphasizes the endpoints requested for interview-style documentation:
-
-- Auth: `/api/auth/signup`, `/api/auth/login`
-- Stocks: `/api/stocks` CRUD
-- Portfolio insights: `/api/portfolio/insights`
-
-For completeness, the repository also exposes:
-
-- `GET /api/health`
-- `GET /api/portfolio/summary`
-- `POST /api/portfolio/sell-analysis`
-- `POST /api/portfolio/scenarios`
+JWT-based authentication secures all protected APIs while keeping the backend stateless.
 
 ---
 
-## Health
+## Documentation
 
-### `GET /api/health`
-
-Returns a simple service heartbeat.
-
-| Item | Value |
-| --- | --- |
-| Method | `GET` |
-| Path | `/api/health` |
-| Auth required | No |
-
-Sample response:
-
-```json
-{
-  "success": true,
-  "data": {
-    "service": "stock-insights",
-    "status": "ok"
-  }
-}
-```
+OpenAPI specifications are included for the REST APIs, making the endpoints easier to understand and integrate.
 
 ---
 
-## Auth
+## Deployment
 
-### `POST /api/auth/signup`
+The application is deployed on Render, providing a publicly accessible environment for demonstration and testing.
 
-Creates a new user, hashes the password, and returns a JWT.
 
-| Item | Value |
-| --- | --- |
-| Method | `POST` |
-| Path | `/api/auth/signup` |
-| Auth required | No |
+# Broker Integration & Portfolio Import
 
-Request headers:
+## Why both Broker Connection and Portfolio Import?
 
-| Header | Required | Value |
-| --- | --- | --- |
-| `Content-Type` | Yes | `application/json` |
+While developing Stock Insights, an important limitation became apparent.
 
-Request body:
+Most broker APIs reliably provide **current holdings**, but often do not expose the complete historical transaction data required for meaningful portfolio analytics.
 
-| Field | Type | Required | Notes |
-| --- | --- | --- | --- |
-| `name` | `string` | Yes | Minimum length: 2 |
-| `email` | `string` | Yes | Must be a valid email |
-| `password` | `string` | Yes | Minimum length: 8 |
+Examples of information that may be unavailable include:
 
-Example request body:
+- Original purchase date
+- Multiple purchase lots
+- Historical buy/sell transactions
+- Complete acquisition timeline
 
-```json
-{
-  "name": "Demo Investor",
-  "email": "demo@stockinsights.dev",
-  "password": "Demo@1234"
-}
-```
+However, many investment insights depend on historical transactions rather than current holdings alone.
 
-Sample response:
+Examples include:
 
-```json
-{
-  "success": true,
-  "data": {
-    "user": {
-      "_id": "6804f0f1a1a1a1a1a1a1a001",
-      "name": "Demo Investor",
-      "email": "demo@stockinsights.dev",
-      "createdAt": "2026-04-20T15:40:12.000Z",
-      "updatedAt": "2026-04-20T15:40:12.000Z"
-    },
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.demo.signup.token"
-  }
-}
-```
+- Holding duration
+- Long-term vs short-term classification
+- Sell decision analysis
+- Portfolio scenario projections
+- Investment decision scoring
 
-Common errors:
+To overcome this limitation, Stock Insights introduces a broker-specific transaction import pipeline.
 
-- `400 VALIDATION_ERROR`
-- `409 EMAIL_ALREADY_IN_USE`
+## Current Implementation
 
-### `POST /api/auth/login`
+### Broker Connection
 
-Authenticates an existing user and returns a fresh JWT.
+Designed as the foundation for future broker integrations.
 
-| Item | Value |
-| --- | --- |
-| Method | `POST` |
-| Path | `/api/auth/login` |
-| Auth required | No |
+Responsibilities include:
 
-Request headers:
+- Connecting supported broker accounts
+- Retrieving current holdings
+- Supporting future automated synchronization
 
-| Header | Required | Value |
-| --- | --- | --- |
-| `Content-Type` | Yes | `application/json` |
+### Portfolio Import
 
-Request body:
+Currently supports importing historical transactions using a broker-specific Excel template.
 
-| Field | Type | Required | Notes |
-| --- | --- | --- | --- |
-| `email` | `string` | Yes | Must match a registered account |
-| `password` | `string` | Yes | Plain text password |
+Current implementation:
 
-Example request body:
+- Samco XLSX Import
 
-```json
-{
-  "email": "demo@stockinsights.dev",
-  "password": "Demo@1234"
-}
-```
+By reconstructing transaction history, the application generates richer portfolio analytics than holdings-only integrations.
 
-Sample response:
+This design decision prioritizes analytical accuracy over incomplete automation.
 
-```json
-{
-  "success": true,
-  "data": {
-    "user": {
-      "_id": "6804f0f1a1a1a1a1a1a1a001",
-      "name": "Demo Investor",
-      "email": "demo@stockinsights.dev",
-      "createdAt": "2026-04-20T15:40:12.000Z",
-      "updatedAt": "2026-04-20T15:40:12.000Z"
-    },
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.demo.login.token"
-  }
-}
-```
+# Portfolio Decision Engine
 
-Common errors:
+One of the primary goals of Stock Insights is to move beyond displaying portfolio statistics and instead provide meaningful investment insights.
 
-- `400 VALIDATION_ERROR`
-- `401 INVALID_CREDENTIALS`
+The Portfolio Decision Engine combines multiple portfolio signals to generate a consolidated view of each holding and identify positions that may deserve further attention.
+
+The objective is **not to make investment decisions on behalf of the user**, but to present data in a structured way that supports better decision-making.
+
+## Inputs Considered
+
+The decision engine evaluates several portfolio characteristics, including:
+
+- Portfolio allocation percentage
+- Current profit or loss
+- Unrealized return
+- Holding duration
+- Position size
+- Portfolio concentration
+- Investment diversification
+- Historical transaction data
+- User-defined assumptions
+
+As additional analytics are introduced, the decision engine is designed to evolve without requiring major architectural changes.
+
+## Decision Categories
+
+Depending on the available portfolio data, the application may generate observations such as:
+
+- Portfolio appears well diversified
+- Position allocation exceeds recommended threshold
+- Position has become overweight
+- Portfolio concentration risk detected
+- Position may deserve additional review
+- Long-term holding identified
+- Potential rebalance opportunity
+
+These observations are intended to support investment analysis rather than provide financial advice.
 
 ---
 
-## Stocks
+# AI-Assisted Insights
 
-All stock endpoints require a bearer token.
+Stock Insights incorporates AI-assisted analysis to generate readable explanations from portfolio data.
 
-### `GET /api/stocks`
+Rather than presenting only numerical values, the platform converts analytical results into summaries that are easier for investors to understand.
 
-Returns all positions owned by the authenticated user, sorted by `buyDate` descending and then `createdAt` descending.
+Examples include:
 
-| Item | Value |
-| --- | --- |
-| Method | `GET` |
-| Path | `/api/stocks` |
-| Auth required | Yes |
+- Portfolio health summaries
+- Allocation explanations
+- Concentration observations
+- Sell decision reasoning
+- Scenario interpretation
 
-Request headers:
+AI is used as an explanation layer built on top of deterministic portfolio analytics.
 
-| Header | Required | Value |
-| --- | --- | --- |
-| `Authorization` | Yes | `Bearer <jwt>` |
+All analytical calculations continue to originate from the application's own business logic.
 
-Query params: none
-
-Sample response:
-
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "_id": "6804f0f1a1a1a1a1a1a1a103",
-      "user": "6804f0f1a1a1a1a1a1a1a001",
-      "symbol": "SBIN",
-      "quantity": 35,
-      "buyPrice": 720,
-      "buyDate": "2025-06-08T00:00:00.000Z",
-      "currentPrice": 807,
-      "note": "Financial exposure",
-      "createdAt": "2026-04-20T15:45:18.000Z",
-      "updatedAt": "2026-04-20T15:45:18.000Z",
-      "__v": 0
-    },
-    {
-      "_id": "6804f0f1a1a1a1a1a1a1a102",
-      "user": "6804f0f1a1a1a1a1a1a1a001",
-      "symbol": "INFY",
-      "quantity": 20,
-      "buyPrice": 1480,
-      "buyDate": "2025-01-15T00:00:00.000Z",
-      "currentPrice": 1624,
-      "note": "Accumulated on dip",
-      "createdAt": "2026-04-20T15:45:17.000Z",
-      "updatedAt": "2026-04-20T15:45:17.000Z",
-      "__v": 0
-    }
-  ]
-}
-```
-
-Note: this list currently comes from `.lean()`, so `__v` can appear on list items. Single-item create/get/update responses do not include `__v`.
-
-### `POST /api/stocks`
-
-Creates a new stock position for the authenticated user.
-
-| Item | Value |
-| --- | --- |
-| Method | `POST` |
-| Path | `/api/stocks` |
-| Auth required | Yes |
-
-Request headers:
-
-| Header | Required | Value |
-| --- | --- | --- |
-| `Authorization` | Yes | `Bearer <jwt>` |
-| `Content-Type` | Yes | `application/json` |
-
-Request body:
-
-| Field | Type | Required | Notes |
-| --- | --- | --- | --- |
-| `symbol` | `string` | Yes | 1-15 chars, letters with optional `.` or `-`; saved uppercase |
-| `quantity` | `number` | Yes | Must be greater than `0` |
-| `buyPrice` | `number` | Yes | Must be greater than `0` |
-| `buyDate` | `string` | Yes | Any valid date; stored as ISO date |
-| `currentPrice` | `number \| null` | No | Optional override; if omitted or `null`, pricing can fall back to mock price logic in portfolio endpoints |
-| `note` | `string \| null` | No | Optional free-text note |
-
-Example request body:
-
-```json
-{
-  "symbol": "TCS",
-  "quantity": 12,
-  "buyPrice": 3650,
-  "buyDate": "2024-02-12",
-  "currentPrice": 4015,
-  "note": "Core IT holding"
-}
-```
-
-Sample response:
-
-```json
-{
-  "success": true,
-  "data": {
-    "_id": "6804f0f1a1a1a1a1a1a1a101",
-    "user": "6804f0f1a1a1a1a1a1a1a001",
-    "symbol": "TCS",
-    "quantity": 12,
-    "buyPrice": 3650,
-    "buyDate": "2024-02-12T00:00:00.000Z",
-    "currentPrice": 4015,
-    "note": "Core IT holding",
-    "createdAt": "2026-04-20T15:45:10.000Z",
-    "updatedAt": "2026-04-20T15:45:10.000Z"
-  }
-}
-```
-
-Common errors:
-
-- `400 VALIDATION_ERROR`
-- `401 AUTH_TOKEN_MISSING`
-- `401 AUTH_TOKEN_INVALID`
-
-### `GET /api/stocks/:stockId`
-
-Returns one stock position owned by the authenticated user.
-
-| Item | Value |
-| --- | --- |
-| Method | `GET` |
-| Path | `/api/stocks/:stockId` |
-| Auth required | Yes |
-
-Request headers:
-
-| Header | Required | Value |
-| --- | --- | --- |
-| `Authorization` | Yes | `Bearer <jwt>` |
-
-Path params:
-
-| Param | Type | Required | Description |
-| --- | --- | --- | --- |
-| `stockId` | `string` | Yes | Mongo ObjectId of the stock position |
-
-Sample response:
-
-```json
-{
-  "success": true,
-  "data": {
-    "_id": "6804f0f1a1a1a1a1a1a1a101",
-    "user": "6804f0f1a1a1a1a1a1a1a001",
-    "symbol": "TCS",
-    "quantity": 12,
-    "buyPrice": 3650,
-    "buyDate": "2024-02-12T00:00:00.000Z",
-    "currentPrice": 4015,
-    "note": "Core IT holding",
-    "createdAt": "2026-04-20T15:45:10.000Z",
-    "updatedAt": "2026-04-20T15:45:10.000Z"
-  }
-}
-```
-
-Common errors:
-
-- `401 AUTH_TOKEN_MISSING`
-- `401 AUTH_TOKEN_INVALID`
-- `404 STOCK_NOT_FOUND`
-
-### `PATCH /api/stocks/:stockId`
-
-Partially updates a stock position owned by the authenticated user.
-
-| Item | Value |
-| --- | --- |
-| Method | `PATCH` |
-| Path | `/api/stocks/:stockId` |
-| Auth required | Yes |
-
-Request headers:
-
-| Header | Required | Value |
-| --- | --- | --- |
-| `Authorization` | Yes | `Bearer <jwt>` |
-| `Content-Type` | Yes | `application/json` |
-
-Path params:
-
-| Param | Type | Required | Description |
-| --- | --- | --- | --- |
-| `stockId` | `string` | Yes | Mongo ObjectId of the stock position |
-
-Request body:
-
-All fields are optional. Validation rules are the same as create.
-
-Example request body:
-
-```json
-{
-  "quantity": 15,
-  "currentPrice": 4055,
-  "note": "Increased after earnings"
-}
-```
-
-Sample response:
-
-```json
-{
-  "success": true,
-  "data": {
-    "_id": "6804f0f1a1a1a1a1a1a1a101",
-    "user": "6804f0f1a1a1a1a1a1a1a001",
-    "symbol": "TCS",
-    "quantity": 15,
-    "buyPrice": 3650,
-    "buyDate": "2024-02-12T00:00:00.000Z",
-    "currentPrice": 4055,
-    "note": "Increased after earnings",
-    "createdAt": "2026-04-20T15:45:10.000Z",
-    "updatedAt": "2026-04-20T16:05:44.000Z"
-  }
-}
-```
-
-Common errors:
-
-- `400 VALIDATION_ERROR`
-- `401 AUTH_TOKEN_MISSING`
-- `401 AUTH_TOKEN_INVALID`
-- `404 STOCK_NOT_FOUND`
-
-### `DELETE /api/stocks/:stockId`
-
-Deletes a stock position owned by the authenticated user.
-
-| Item | Value |
-| --- | --- |
-| Method | `DELETE` |
-| Path | `/api/stocks/:stockId` |
-| Auth required | Yes |
-
-Request headers:
-
-| Header | Required | Value |
-| --- | --- | --- |
-| `Authorization` | Yes | `Bearer <jwt>` |
-
-Path params:
-
-| Param | Type | Required | Description |
-| --- | --- | --- | --- |
-| `stockId` | `string` | Yes | Mongo ObjectId of the stock position |
-
-Sample response:
-
-```json
-{
-  "success": true,
-  "data": {
-    "deleted": true,
-    "stockId": "6804f0f1a1a1a1a1a1a1a101"
-  }
-}
-```
-
-Common errors:
-
-- `401 AUTH_TOKEN_MISSING`
-- `401 AUTH_TOKEN_INVALID`
-- `404 STOCK_NOT_FOUND`
+This approach keeps portfolio calculations transparent while using AI to improve readability.
 
 ---
 
-## Portfolio Summary
-
-### `GET /api/portfolio/summary`
-
-Returns a portfolio summary plus scenario projections and per-position sell/scenario data.
-
-| Item | Value |
-| --- | --- |
-| Method | `GET` |
-| Path | `/api/portfolio/summary` |
-| Auth required | Yes |
-
-Request headers:
-
-| Header | Required | Value |
-| --- | --- | --- |
-| `Authorization` | Yes | `Bearer <jwt>` |
-
-Query params:
-
-| Param | Type | Required | Default | Description |
-| --- | --- | --- | --- | --- |
-| `years` | `number` | No | `3` | Scenario horizon in years |
-| `includeInflation` | `boolean` | No | `false` | Accepts `true`, `"true"`, `1`, or `"1"` |
-| `inflationRate` | `number` | No | `6` | Annual inflation percentage; used only when `includeInflation=true` |
-
-Example query:
-
-```http
-GET /api/portfolio/summary?years=3&includeInflation=true&inflationRate=6
-```
-
-Sample response:
-
-```json
-{
-  "success": true,
-  "data": {
-    "options": {
-      "years": 3,
-      "includeInflation": true,
-      "inflationRatePct": 6
-    },
-    "summary": {
-      "totalInvestment": 98600,
-      "totalCurrentValue": 108905,
-      "totalProfitLoss": 10305,
-      "totalProfitLossPct": 10.45,
-      "holdingsCount": 3,
-      "allocation": [
-        {
-          "symbol": "TCS",
-          "allocationPct": 44.24
-        },
-        {
-          "symbol": "INFY",
-          "allocationPct": 29.82
-        },
-        {
-          "symbol": "SBIN",
-          "allocationPct": 25.94
-        }
-      ]
-    },
-    "portfolioScenarioProjection": {
-      "principal": 108905,
-      "years": 3,
-      "includeInflation": true,
-      "inflationRatePct": 6,
-      "scenarios": [
-        {
-          "name": "conservative",
-          "annualRatePct": 5,
-          "nominalFutureValue": 126071.15,
-          "inflationAdjustedFutureValue": 105851.77
-        },
-        {
-          "name": "moderate",
-          "annualRatePct": 10,
-          "nominalFutureValue": 144952.56,
-          "inflationAdjustedFutureValue": 121704.96
-        },
-        {
-          "name": "aggressive",
-          "annualRatePct": 15,
-          "nominalFutureValue": 165630.89,
-          "inflationAdjustedFutureValue": 139066.89
-        }
-      ],
-      "range": {
-        "nominalMin": 126071.15,
-        "nominalMax": 165630.89,
-        "inflationAdjustedMin": 105851.77,
-        "inflationAdjustedMax": 139066.89
-      }
-    },
-    "positions": [
-      {
-        "stockId": "6804f0f1a1a1a1a1a1a1a101",
-        "symbol": "TCS",
-        "quantity": 12,
-        "note": "Core IT holding",
-        "prices": {
-          "buyPrice": 3650,
-          "currentPrice": 4015
-        },
-        "holding": {
-          "buyDate": "2024-02-12T00:00:00.000Z",
-          "holdingDays": 798
-        },
-        "metrics": {
-          "investedAmount": 43800,
-          "currentValue": 48180,
-          "profitLoss": 4380,
-          "profitLossPct": 10,
-          "allocationPct": 44.24
-        },
-        "sellAnalysis": {
-          "inputs": {
-            "buyPrice": 3650,
-            "quantity": 12,
-            "currentPrice": 4015,
-            "holdingDurationDays": 798
-          },
-          "metrics": {
-            "totalInvestment": 43800,
-            "currentValue": 48180,
-            "profitLoss": 4380,
-            "profitLossPct": 10
-          },
-          "classification": {
-            "holdingType": "long_term",
-            "thresholdDays": 365
-          },
-          "suggestion": {
-            "code": "hold_for_long_term",
-            "reasonCodes": [
-              "position_in_profit",
-              "long_term_holding",
-              "long_term_window_active"
-            ]
-          },
-          "signals": {
-            "profitable": true,
-            "lossMaking": false
-          }
-        },
-        "scenarioProjection": {
-          "principal": 48180,
-          "years": 3,
-          "includeInflation": true,
-          "inflationRatePct": 6,
-          "scenarios": [
-            {
-              "name": "conservative",
-              "annualRatePct": 5,
-              "nominalFutureValue": 55774.37,
-              "inflationAdjustedFutureValue": 46829.24
-            },
-            {
-              "name": "moderate",
-              "annualRatePct": 10,
-              "nominalFutureValue": 64127.58,
-              "inflationAdjustedFutureValue": 53842.75
-            },
-            {
-              "name": "aggressive",
-              "annualRatePct": 15,
-              "nominalFutureValue": 73275.76,
-              "inflationAdjustedFutureValue": 61523.74
-            }
-          ],
-          "range": {
-            "nominalMin": 55774.37,
-            "nominalMax": 73275.76,
-            "inflationAdjustedMin": 46829.24,
-            "inflationAdjustedMax": 61523.74
-          }
-        }
-      }
-    ]
-  }
-}
-```
-
----
-
-## Portfolio Insights
-
-### `GET /api/portfolio/insights`
-
-This is the most important endpoint in the project. It turns raw holdings into a decision-support payload with portfolio summary context, rankings, position-by-position scoring, and natural-language explanations.
-
-| Item | Value |
-| --- | --- |
-| Method | `GET` |
-| Path | `/api/portfolio/insights` |
-| Auth required | Yes |
-
-Request headers:
-
-| Header | Required | Value |
-| --- | --- | --- |
-| `Authorization` | Yes | `Bearer <jwt>` |
-
-Query params:
-
-| Param | Type | Required | Default | Description |
-| --- | --- | --- | --- | --- |
-| `years` | `number` | No | `3` | Scenario horizon in years for portfolio and position projections |
-| `includeInflation` | `boolean` | No | `false` | When truthy, adds `inflationAdjustedFutureValue` and real-value ranges |
-| `inflationRate` | `number` | No | `6` | Annual inflation percentage if inflation adjustment is enabled |
-
-Example query:
-
-```http
-GET /api/portfolio/insights?years=3&includeInflation=true&inflationRate=6
-```
-
-Sample response:
-
-The example below is intentionally representative instead of exhaustive. Actual `positions` always includes one entry per stock in the authenticated portfolio, and ranking arrays can contain up to 3 entries each.
-
-```json
-{
-  "success": true,
-  "data": {
-    "options": {
-      "years": 3,
-      "includeInflation": true,
-      "inflationRatePct": 6
-    },
-    "portfolioSummary": {
-      "totalInvestment": 174575,
-      "totalCurrentValue": 182635,
-      "totalProfitLoss": 8060,
-      "totalProfitLossPct": 4.62,
-      "holdingsCount": 6,
-      "allocation": [
-        {
-          "symbol": "TCS",
-          "allocationPct": 40.41
-        },
-        {
-          "symbol": "INFY",
-          "allocationPct": 16.43
-        },
-        {
-          "symbol": "SBIN",
-          "allocationPct": 15.47
-        }
-      ],
-      "explanation": "Portfolio is up +4.62% (₹8,060) across 6 holdings. Concentration risk is elevated with 1 overexposed position, led by TCS at 40.41%. Scenario-based portfolio outcomes range from ₹1,77,515 to ₹2,33,217 over 3 years (scenario-based)."
-    },
-    "portfolioScenarioProjection": {
-      "principal": 182635,
-      "years": 3,
-      "includeInflation": true,
-      "inflationRatePct": 6,
-      "scenarios": [
-        {
-          "name": "conservative",
-          "annualRatePct": 5,
-          "nominalFutureValue": 211422.84,
-          "inflationAdjustedFutureValue": 177514.69
-        },
-        {
-          "name": "moderate",
-          "annualRatePct": 10,
-          "nominalFutureValue": 243087.19,
-          "inflationAdjustedFutureValue": 204100.69
-        },
-        {
-          "name": "aggressive",
-          "annualRatePct": 15,
-          "nominalFutureValue": 277765.01,
-          "inflationAdjustedFutureValue": 233216.86
-        }
-      ],
-      "range": {
-        "nominalMin": 211422.84,
-        "nominalMax": 277765.01,
-        "inflationAdjustedMin": 177514.69,
-        "inflationAdjustedMax": 233216.86
-      }
-    },
-    "rankings": {
-      "topPerformers": [
-        {
-          "stockId": "6804f0f1a1a1a1a1a1a1b101",
-          "symbol": "TCS",
-          "allocationPct": 40.41,
-          "profitLossPct": 12.33,
-          "currentValue": 73800,
-          "finalScore": 8.34,
-          "sentimentLabel": "neutral",
-          "suggestionCode": "hold_for_long_term",
-          "signalCodes": [
-            "moderate_overexposure",
-            "strong_unrealized_gain"
-          ]
-        }
-      ],
-      "worstPerformers": [
-        {
-          "stockId": "6804f0f1a1a1a1a1a1a1b106",
-          "symbol": "AAPL",
-          "allocationPct": 0.54,
-          "profitLossPct": -7.91,
-          "currentValue": 990,
-          "finalScore": 3.13,
-          "sentimentLabel": "neutral",
-          "suggestionCode": "hold_for_long_term",
-          "signalCodes": []
-        }
-      ],
-      "overexposure": [
-        {
-          "stockId": "6804f0f1a1a1a1a1a1a1b101",
-          "symbol": "TCS",
-          "allocationPct": 40.41,
-          "profitLossPct": 12.33,
-          "currentValue": 73800,
-          "finalScore": 8.34,
-          "sentimentLabel": "neutral",
-          "suggestionCode": "hold_for_long_term",
-          "signalCodes": [
-            "moderate_overexposure",
-            "strong_unrealized_gain"
-          ],
-          "severity": "moderate_overexposure",
-          "overexposureSeverity": "moderate_overexposure",
-          "overexposurePenalty": -0.04
-        }
-      ]
-    },
-    "positions": [
-      {
-        "stockId": "6804f0f1a1a1a1a1a1a1b101",
-        "symbol": "TCS",
-        "quantity": 18,
-        "prices": {
-          "buyPrice": 3650,
-          "currentPrice": 4100
-        },
-        "holding": {
-          "buyDate": "2024-02-12T00:00:00.000Z",
-          "holdingDays": 798
-        },
-        "metrics": {
-          "investedAmount": 65700,
-          "currentValue": 73800,
-          "profitLoss": 8100,
-          "profitLossPct": 12.33,
-          "allocationPct": 40.41
-        },
-        "confidenceLabel": "Medium",
-        "explanations": [
-          "This is a high-quality holding, but concentration risk outweighs the company view. Reduce the position to restore portfolio balance; the action is driven by portfolio risk, not by the gain."
-        ],
-        "sellAnalysis": {
-          "inputs": {
-            "buyPrice": 3650,
-            "quantity": 18,
-            "currentPrice": 4100,
-            "holdingDurationDays": 798
-          },
-          "metrics": {
-            "totalInvestment": 65700,
-            "currentValue": 73800,
-            "profitLoss": 8100,
-            "profitLossPct": 12.33
-          },
-          "classification": {
-            "holdingType": "long_term",
-            "thresholdDays": 365
-          },
-          "suggestion": {
-            "code": "hold_for_long_term",
-            "reasonCodes": [
-              "position_in_profit",
-              "long_term_holding",
-              "long_term_window_active"
-            ]
-          },
-          "signals": {
-            "profitable": true,
-            "lossMaking": false
-          }
-        },
-        "scenarioProjection": {
-          "principal": 73800,
-          "years": 3,
-          "includeInflation": true,
-          "inflationRatePct": 6,
-          "scenarios": [
-            {
-              "name": "conservative",
-              "annualRatePct": 5,
-              "nominalFutureValue": 85432.73,
-              "inflationAdjustedFutureValue": 71730.97
-            },
-            {
-              "name": "moderate",
-              "annualRatePct": 10,
-              "nominalFutureValue": 98227.8,
-              "inflationAdjustedFutureValue": 82473.96
-            },
-            {
-              "name": "aggressive",
-              "annualRatePct": 15,
-              "nominalFutureValue": 112240.57,
-              "inflationAdjustedFutureValue": 94239.35
-            }
-          ],
-          "range": {
-            "nominalMin": 85432.73,
-            "nominalMax": 112240.57,
-            "inflationAdjustedMin": 71730.97,
-            "inflationAdjustedMax": 94239.35
-          }
-        },
-        "sentiment": {
-          "symbol": "TCS",
-          "sentiment": {
-            "label": "neutral",
-            "score": 0
-          },
-          "aggregate": {
-            "headlineCount": 0,
-            "totalHeadlineScore": 0,
-            "averageHeadlineScore": 0
-          },
-          "source": {
-            "service": "ai-news-service",
-            "status": "fallback",
-            "reasonCode": "SERVICE_UNAVAILABLE"
-          },
-          "headlines": []
-        },
-        "scoring": {
-          "technicalScore": 2,
-          "fundamentalScore": 3,
-          "sentimentScore": 0,
-          "portfolioSignals": {
-            "score": 1.96,
-            "signalCodes": [
-              "moderate_overexposure",
-              "strong_unrealized_gain"
-            ],
-            "overexposureSeverity": "moderate_overexposure",
-            "overexposurePenalty": -0.04
-          },
-          "defaultWeights": {
-            "technicalScore": 0.35,
-            "fundamentalScore": 0.25,
-            "sentimentScore": 0.15,
-            "portfolioSignals": 0.25
-          },
-          "weights": {
-            "technicalScore": 0.25,
-            "fundamentalScore": 0.3,
-            "sentimentScore": 0.08,
-            "portfolioSignals": 0.37
-          },
-          "weightAdjustments": [
-            "overexposure_emphasis",
-            "long_term_fundamental_emphasis"
-          ],
-          "normalizedScores": {
-            "technicalScore": 7.5,
-            "fundamentalScore": 10,
-            "sentimentScore": 5,
-            "portfolioSignals": 8.27
-          },
-          "weightedScores": {
-            "technicalScore": 1.88,
-            "fundamentalScore": 3,
-            "sentimentScore": 0.4,
-            "portfolioSignals": 3.06
-          },
-          "scoreScale": {
-            "min": 0,
-            "max": 10
-          },
-          "finalScore": 8.34
-        }
-      }
-    ]
-  }
-}
-```
-
-### `/api/portfolio/insights` Field Guide
-
-#### `portfolioSummary`
-
-High-level portfolio metrics:
-
-- `totalInvestment`: total buy-side capital across all holdings
-- `totalCurrentValue`: total present value using provided `currentPrice` or mock resolved price
-- `totalProfitLoss`: `totalCurrentValue - totalInvestment`
-- `totalProfitLossPct`: percentage return on the full portfolio
-- `holdingsCount`: number of positions
-- `allocation[]`: symbol-level allocation percentages
-- `explanation`: one generated portfolio-level narrative paragraph
-
-#### `positions[]`
-
-Each array item is a fully analyzed position and contains:
-
-- `prices`: buy price and current price
-- `holding`: original buy date plus computed `holdingDays`
-- `metrics`: invested amount, current value, P/L, P/L %, and allocation %
-- `sellAnalysis`: performance/holding metrics plus a compatibility suggestion derived from `decision`
-- `scenarioProjection`: conservative/moderate/aggressive projection ranges
-- `sentiment`: external sentiment payload or neutral fallback
-- `scoring`: machine-readable scoring breakdown
-- `confidenceLabel`: compatibility alias of `decision.confidence.label`
-- `explanation`: the authoritative narrative from `decision.explanation`
-- `explanations`: a one-item compatibility array containing that same explanation
-
-Sentiment shape notes:
-
-- when `ai-news-service` is reachable, `sentiment.headlines[]` contains classified headline objects with `text` and nested `sentiment`
-- when that service is unavailable, the API falls back to a neutral payload with:
-  - `source.status = "fallback"`
-  - `source.reasonCode = "SERVICE_UNAVAILABLE"`
-  - `headlines = []`
-
-#### Scoring breakdown
-
-`scoring` is the heart of the endpoint:
-
-- `technicalScore`
-  Based on unrealized return bands.
-  Current logic maps:
-  `>=20% => 4`, `>=8% => 2`, `>-5% => 0`, `>-15% => -2`, otherwise `-4`.
-
-- `fundamentalScore`
-  Based on holding duration.
-  Current logic maps:
-  `>=730 days => 3`, `>=365 => 2`, `>=180 => 1`, otherwise `0`.
-
-- `sentimentScore`
-  Pulled from `ai-news-service` and falls back to `0` if the service is unavailable.
-
-- `portfolioSignals`
-  Includes:
-  - `score`
-  - `signalCodes`
-  - `overexposureSeverity`
-  - `overexposurePenalty`
-
-- `defaultWeights`
-  Baseline weighting profile:
-  - `technicalScore`: `0.35`
-  - `fundamentalScore`: `0.25`
-  - `sentimentScore`: `0.15`
-  - `portfolioSignals`: `0.25`
-
-- `weights`
-  Effective weights after dynamic adjustments for:
-  - overexposure
-  - short-term vs long-term holding duration
-  - strong sentiment
-
-- `weightAdjustments`
-  List of applied adjustment reason codes such as:
-  - `overexposure_emphasis`
-  - `short_term_technical_emphasis`
-  - `long_term_fundamental_emphasis`
-  - `strong_sentiment_emphasis`
-
-- `normalizedScores`
-  Each raw component mapped onto a `0-10` scale.
-
-- `weightedScores`
-  Each normalized score multiplied by its effective weight.
-
-- `finalScore`
-  Sum of weighted scores, clamped to the range defined by `scoreScale`:
-  - minimum `0`
-  - maximum `10`
-
-#### `overexposureSeverity` and `overexposurePenalty`
-
-Overexposure is based on allocation percentage.
-
-Current thresholds:
-
-- `allocation >= 40%` => `moderate_overexposure`
-- `allocation > 60%` => `high_overexposure`
-
-Penalty behavior:
-
-- Moderate penalty grows from `0` down to `-2` between `40%` and `60%`
-- High penalty grows further and is capped at `-5`
-- If a position is not overexposed:
-  - `overexposureSeverity` is `null`
-  - `overexposurePenalty` is `0`
-
-Where these appear:
-
-- `positions[].scoring.portfolioSignals.overexposureSeverity`
-- `positions[].scoring.portfolioSignals.overexposurePenalty`
-- `rankings.overexposure[].severity`
-- `rankings.overexposure[].overexposureSeverity`
-- `rankings.overexposure[].overexposurePenalty`
-
-#### `confidenceLabel`
-
-Compatibility alias of `decision.confidence.label`. Confidence is selected only by the Portfolio Decision Engine.
-
-#### `explanations`
-
-Each position gets exactly one explanation from `position.decision.explanation`. The legacy `explanations` field contains only that same string for backward compatibility.
-
-#### `rankings`
-
-`rankings` is designed for fast scanning in dashboards and interviews.
-
-- `topPerformers`
-  Top 3 positions by `finalScore`, descending.
-
-- `worstPerformers`
-  Bottom positions by `finalScore` after removing anything already included in `topPerformers`.
-  In a portfolio with 3 or fewer positions, this array can be empty.
-
-- `overexposure`
-  Positions whose allocation breaches overexposure thresholds, sorted by allocation descending.
-
-Each ranking item is intentionally compact and includes:
-
-- `stockId`
-- `symbol`
-- `allocationPct`
-- `profitLossPct`
-- `currentValue`
-- `finalScore`
-- `sentimentLabel`
-- `suggestionCode`
-- `signalCodes`
-
-The `overexposure` ranking adds:
-
-- `severity`
-- `overexposureSeverity`
-- `overexposurePenalty`
-
----
-
-## Portfolio Utilities
-
-### `POST /api/portfolio/sell-analysis`
-
-Runs sell-analysis logic for an ad hoc position payload.
-
-| Item | Value |
-| --- | --- |
-| Method | `POST` |
-| Path | `/api/portfolio/sell-analysis` |
-| Auth required | Yes |
-
-Request headers:
-
-| Header | Required | Value |
-| --- | --- | --- |
-| `Authorization` | Yes | `Bearer <jwt>` |
-| `Content-Type` | Yes | `application/json` |
-
-Request body:
-
-| Field | Type | Required | Notes |
-| --- | --- | --- | --- |
-| `buyPrice` | `number` | Yes | Must be greater than `0` |
-| `quantity` | `number` | Yes | Must be greater than `0` |
-| `currentPrice` | `number` | Yes | Must be greater than `0` |
-| `holdingDurationDays` | `number` | Yes | Must be `>= 0` |
-
-Example request body:
-
-```json
-{
-  "buyPrice": 100,
-  "quantity": 20,
-  "currentPrice": 122,
-  "holdingDurationDays": 140
-}
-```
-
-Sample response:
-
-```json
-{
-  "success": true,
-  "data": {
-    "inputs": {
-      "buyPrice": 100,
-      "quantity": 20,
-      "currentPrice": 122,
-      "holdingDurationDays": 140
-    },
-    "metrics": {
-      "totalInvestment": 2000,
-      "currentValue": 2440,
-      "profitLoss": 440,
-      "profitLossPct": 22
-    },
-    "classification": {
-      "holdingType": "short_term",
-      "thresholdDays": 365
-    },
-    "suggestion": {
-      "code": null,
-      "reasonCodes": [
-        "position_in_profit",
-        "short_term_holding"
-      ]
-    },
-    "signals": {
-      "profitable": true,
-      "lossMaking": false
-    }
-  }
-}
-```
-
-### `POST /api/portfolio/scenarios`
-
-Builds a scenario projection without needing stored portfolio data.
-
-| Item | Value |
-| --- | --- |
-| Method | `POST` |
-| Path | `/api/portfolio/scenarios` |
-| Auth required | Yes |
-
-Request headers:
-
-| Header | Required | Value |
-| --- | --- | --- |
-| `Authorization` | Yes | `Bearer <jwt>` |
-| `Content-Type` | Yes | `application/json` |
-
-Request body:
-
-| Field | Type | Required | Notes |
-| --- | --- | --- | --- |
-| `principal` | `number` | Yes | Must be greater than `0` |
-| `years` | `number` | Yes | Must be greater than `0` |
-| `includeInflation` | `boolean` | No | Defaults to `false` |
-| `inflationRate` | `number` | No | Must be `>= 0` if provided |
-
-Example request body:
-
-```json
-{
-  "principal": 100000,
-  "years": 5,
-  "includeInflation": true,
-  "inflationRate": 6
-}
-```
-
-Sample response:
-
-```json
-{
-  "success": true,
-  "data": {
-    "principal": 100000,
-    "years": 5,
-    "includeInflation": true,
-    "inflationRatePct": 6,
-    "scenarios": [
-      {
-        "name": "conservative",
-        "annualRatePct": 5,
-        "nominalFutureValue": 127628.16,
-        "inflationAdjustedFutureValue": 95371.19
-      },
-      {
-        "name": "moderate",
-        "annualRatePct": 10,
-        "nominalFutureValue": 161051,
-        "inflationAdjustedFutureValue": 120346.68
-      },
-      {
-        "name": "aggressive",
-        "annualRatePct": 15,
-        "nominalFutureValue": 201135.72,
-        "inflationAdjustedFutureValue": 150300.31
-      }
-    ],
-    "range": {
-      "nominalMin": 127628.16,
-      "nominalMax": 201135.72,
-      "inflationAdjustedMin": 95371.19,
-      "inflationAdjustedMax": 150300.31
-    }
-  }
-}
-```
-
----
-
-## OpenAPI And Swagger
-
-OpenAPI documentation for every current `/api` route is included in:
-
-- `docs/openapi.yaml`
-
-That spec covers:
-
-- `GET /api/health`
-- `POST /api/auth/signup`
-- `POST /api/auth/login`
-- `GET /api/stocks`
-- `POST /api/stocks`
-- `GET /api/stocks/{stockId}`
-- `PATCH /api/stocks/{stockId}`
-- `DELETE /api/stocks/{stockId}`
-- `GET /api/portfolio/summary`
-- `GET /api/portfolio/insights`
-- `POST /api/portfolio/sell-analysis`
-- `POST /api/portfolio/scenarios`
-
-Swagger UI target route:
-
-- `/api-docs`
-
-Important note: this task was completed as a docs-only pass, so the repository now contains the spec and the intended route contract, but it does not wire a live Swagger UI middleware into Express. Serving `/api-docs` for real would require code and dependency changes, which were intentionally left untouched to respect the docs-only constraint.
-
----
-
-## Test Coverage Review
-
-Current baseline:
-
-- `20/20` tests passing via `npm test`
-- covered areas already include:
-  - decision-engine ranking behavior
-  - explanation generation
-  - scenario happy-path projection output
-  - scoring adjustments and penalty monotonicity
-  - sell-analysis happy paths
-
-A focused gap review with only meaningful, non-duplicative additions lives in:
-
-- `docs/test-coverage-review.md`
-
----
-
-## Environment
-
-Key environment variables:
-
-- `PORT=4000`
-- `MONGO_URI=...`
-- `MONGO_DB_NAME=stock_insights`
-- `JWT_SECRET=...`
-- `AI_NEWS_SERVICE_URL=http://localhost:4001`
-- `AI_NEWS_SERVICE_PORT=4001`
-- `DEFAULT_SCENARIO_YEARS=3`
-- `DEFAULT_INFLATION_RATE=6`
-- `LONG_TERM_HOLDING_DAYS=365`
-
-## Project Structure
+# Project Structure
 
 ```text
 stock-insights/
-|-- ai-news-service/
-|   `-- src/
-|-- docs/
-|   |-- openapi.yaml
-|   `-- test-coverage-review.md
-|-- src/
-|   |-- config/
-|   |-- controllers/
-|   |-- middleware/
-|   |-- models/
-|   |-- routes/
-|   |-- services/
-|   |-- utils/
-|   |-- validators/
-|   `-- seeds/
-|-- tests/
-|-- .env.example
-`-- package.json
+│
+├── ai-news-service/          AI-assisted news processing
+│
+├── docs/                     Project documentation
+│
+├── src/
+│   ├── config/
+│   ├── controllers/
+│   ├── middleware/
+│   ├── models/
+│   ├── routes/
+│   ├── services/
+│   ├── utils/
+│   └── app.js
+│
+├── tests/
+│
+├── .env.example
+│
+├── package.json
+│
+└── README.md
 ```
+
+The project follows a modular structure that separates routing, business logic, persistence and supporting utilities.
+
+Keeping these responsibilities isolated makes the codebase easier to extend and maintain as additional analytics and services are introduced.
+
+---
+
+# Getting Started
+
+## Prerequisites
+
+Before running the application, ensure the following software is installed:
+
+- Node.js
+- npm
+- MongoDB
+- Git
+
+---
+
+## Clone Repository
+
+```bash
+git clone https://github.com/aniruddhaad/stock-insights.git
+
+cd stock-insights
+```
+
+---
+
+## Install Dependencies
+
+```bash
+npm install
+```
+
+---
+
+## Configure Environment Variables
+
+Create a `.env` file using the provided template.
+
+```text
+cp .env.example .env
+```
+
+Update the environment variables as required for your local environment.
+
+---
+
+## Start the Application
+
+Backend
+
+```bash
+npm start
+```
+
+AI News Service
+
+```bash
+npm run start:ai-news
+```
+
+The application will now be available locally.
+
+
+# Environment Variables
+
+The application uses environment variables to keep configuration separate from the source code.
+
+Typical configuration includes:
+
+| Variable | Description |
+|----------|-------------|
+| PORT | Express application port |
+| MONGODB_URI | MongoDB connection string |
+| JWT_SECRET | Secret used for JWT authentication |
+| JWT_EXPIRES_IN | JWT expiration period |
+| OPENAI_API_KEY | AI integration (if enabled) |
+| NEWS_API_KEY | Market news integration |
+| NODE_ENV | Runtime environment |
+
+> **Important**
+>
+> Never commit `.env` files containing production credentials.
+> Only `.env.example` should be committed to source control.
+
+---
+
+# REST API
+
+The backend exposes RESTful APIs that power the React frontend.
+
+Major API groups include:
+
+- Authentication
+- User Management
+- Portfolio Management
+- Holdings
+- Portfolio Analytics
+- Portfolio Insights
+- Sell Analysis
+- Scenario Projection
+- Health Check
+
+The APIs follow REST principles and exchange data using JSON.
+
+---
+
+# OpenAPI Documentation
+
+The project includes OpenAPI specifications to document the available endpoints.
+
+The documentation provides:
+
+- Endpoint descriptions
+- Request parameters
+- Response payloads
+- Authentication requirements
+- Error responses
+
+Keeping the API specification synchronized with implementation makes the application easier to understand and integrate.
+
+---
+
+# Testing
+
+The project includes automated tests covering important business functionality.
+
+Areas covered include:
+
+- Authentication
+- API endpoints
+- Portfolio calculations
+- Business services
+- Utility functions
+
+Testing helps ensure that new functionality can be added without breaking existing behavior.
+
+---
+
+# Design Principles
+
+Several architectural principles guided the implementation of Stock Insights.
+
+## Separation of Concerns
+
+Routing, business logic and persistence are kept independent.
+
+## Modular Design
+
+Business functionality is divided into reusable services that can evolve independently.
+
+## REST-first Development
+
+The backend is designed around REST APIs, allowing multiple client applications to consume the same services.
+
+## Incremental Evolution
+
+Rather than attempting to build every feature up front, the application has evolved incrementally as new requirements and ideas emerged.
+
+This approach allowed the architecture to remain flexible while continuously improving the platform.
+
+---
+
+# Lessons Learned
+
+Developing Stock Insights provided several practical insights beyond the implementation itself.
+
+## Historical data matters
+
+Current portfolio holdings alone are insufficient for meaningful investment analytics.
+
+Supporting historical transaction imports significantly improved the quality of portfolio analysis.
+
+---
+
+## Business logic deserves its own layer
+
+Keeping portfolio calculations separate from controllers made the application easier to test, extend and maintain.
+
+---
+
+## AI works best as an assistant
+
+Rather than allowing AI to make investment decisions, the application uses deterministic calculations to generate portfolio metrics and employs AI only to explain the results in natural language.
+
+This combination improves transparency while making analytical output easier to understand.
+
+---
+
+## Building incrementally improves architecture
+
+Many of the platform's capabilities emerged gradually.
+
+Each iteration highlighted opportunities to simplify the design, improve separation of concerns and reduce future complexity.
+
+---
+
+# Future Roadmap
+
+The project will continue evolving as new capabilities are explored.
+
+Planned enhancements include:
+
+- Additional broker integrations
+- Live market data
+- Portfolio rebalancing recommendations
+- Dividend tracking
+- Goal-based investment planning
+- Portfolio benchmarking
+- Advanced risk analytics
+- Email notifications
+- Scheduled portfolio reports
+- AI-powered portfolio summaries
+- Docker deployment
+- CI/CD pipeline
+- Kubernetes deployment
+
+---
+
+# Contributing
+
+Suggestions, bug reports and constructive feedback are always welcome.
+
+If you identify an issue or have ideas for improving the project, feel free to open an issue or submit a pull request.
+
+---
+
+# License
+
+This project is intended for learning, experimentation and portfolio demonstration.
+
+It is provided without financial or investment advice.
+
+Any investment decisions should be based on independent research and consultation with qualified financial professionals.
+
+
+# Application Workflow
+
+The following high-level workflow illustrates how Stock Insights processes user data.
+
+```text
+                     User Login
+                          │
+                          ▼
+                  JWT Authentication
+                          │
+                          ▼
+                Portfolio Dashboard
+                          │
+        ┌─────────────────┼─────────────────┐
+        ▼                 ▼                 ▼
+ Import Transactions   Manage Holdings   Portfolio Analysis
+        │                 │                 │
+        └────────────┬────┴─────────────────┘
+                     ▼
+          Portfolio Decision Engine
+                     │
+      ┌──────────────┼──────────────┐
+      ▼              ▼              ▼
+ Allocation      Sell Analysis   Scenario Projection
+                     │
+                     ▼
+             AI-assisted Insights
+                     │
+                     ▼
+             Results displayed in UI
+```
+
+Each stage has a clearly defined responsibility, allowing new analytical capabilities to be introduced without affecting unrelated parts of the application.
+
+
+# Portfolio Analytics
+
+The analytics module consolidates investment information into a set of meaningful portfolio metrics.
+
+Examples include:
+
+- Total investment
+- Current market value
+- Unrealized profit/loss
+- Profit percentage
+- Allocation percentage
+- Largest holdings
+- Sector exposure (future enhancement)
+- Investment concentration
+- Portfolio diversification
+
+The objective is to provide investors with a complete view of portfolio health rather than isolated financial figures.
+
+
+# Sell Analysis
+
+One of the goals of Stock Insights is to assist investors when reviewing existing positions.
+
+The application evaluates several characteristics of a holding before presenting observations.
+
+Examples include:
+
+- Current profit or loss
+- Holding duration
+- Portfolio allocation
+- Position size
+- Portfolio concentration
+- User assumptions
+
+The generated observations are intended to support investment review and should not be interpreted as financial advice.
+
+
+# Scenario Projection
+
+Scenario Projection estimates the future value of a portfolio under different growth assumptions.
+
+Supported scenarios include:
+
+- Conservative
+- Moderate
+- Aggressive
+
+Optional inflation adjustment helps compare projected returns in today's purchasing power.
+
+The feature is intended to help investors understand long-term portfolio behaviour under multiple assumptions rather than predict future market performance.
+
+
+# Security
+
+Several security practices are incorporated into the application.
+
+## Authentication
+
+- JWT-based authentication
+- Protected API endpoints
+- Password hashing
+
+## API Security
+
+- Authentication middleware
+- Request validation
+- Error handling
+- Consistent HTTP response codes
+
+Sensitive configuration is externalized through environment variables rather than embedded in source code.
+
+# API Overview
+
+The backend exposes RESTful endpoints organized by functional areas.
+
+| Module | Purpose |
+|---------|----------|
+| Authentication | User registration and login |
+| Portfolio | Portfolio CRUD operations |
+| Holdings | Manage stock holdings |
+| Analytics | Portfolio calculations |
+| Insights | Decision-support observations |
+| Sell Analysis | Position review |
+| Scenario Projection | Future value estimation |
+| Health | Service health check |
+
+Detailed endpoint documentation is available through the OpenAPI specification.
+
+# Engineering Decisions
+
+Several implementation decisions were made to keep the application maintainable and extensible.
+
+## Modular Services
+
+Business logic is implemented within service modules rather than controllers.
+
+This keeps HTTP handling independent from portfolio calculations.
+
+---
+
+## REST-first Design
+
+All portfolio functionality is exposed through REST APIs.
+
+This allows additional clients (mobile applications, dashboards or external integrations) to consume the same backend services.
+
+---
+
+## Broker Import Strategy
+
+Rather than relying entirely on broker APIs, Stock Insights supports importing historical transaction data.
+
+This enables richer analytics while remaining compatible with brokers that expose limited historical information.
+
+---
+
+## AI as an Assistant
+
+AI is used to explain analytical results rather than generate investment recommendations.
+
+Keeping calculations deterministic improves transparency and allows users to understand how conclusions were reached.
+
+# Performance Considerations
+
+Several implementation decisions were made with scalability and maintainability in mind.
+
+## Efficient API Design
+
+- RESTful APIs return only the data required by the client.
+- JSON is used consistently across all endpoints.
+- Business logic is centralized within service modules.
+
+---
+
+## Modular Business Logic
+
+Portfolio calculations are isolated from HTTP controllers.
+
+This allows analytical algorithms to evolve independently without affecting API routing or presentation logic.
+
+---
+
+## Future Optimizations
+
+Potential enhancements include:
+
+- Redis caching
+- Background job processing
+- AI response caching
+- Scheduled portfolio analytics
+- WebSocket-based live updates
+- Horizontal scaling
+
+
+# Error Handling
+
+The application follows consistent error-handling practices.
+
+Examples include:
+
+- Invalid authentication credentials
+- Expired JWT tokens
+- Missing portfolio data
+- Validation failures
+- Invalid request payloads
+- Internal server errors
+
+Where appropriate, APIs return meaningful HTTP status codes together with descriptive JSON error responses.
+
+This makes client-side integration simpler and improves troubleshooting.
+
+
+# Logging
+
+Application logging is designed to assist development and troubleshooting.
+
+Typical events include:
+
+- User authentication
+- Portfolio operations
+- Import processing
+- API failures
+- Unexpected exceptions
+
+Future enhancements may include:
+
+- Structured logging
+- Request correlation IDs
+- Centralized log aggregation
+
+
+# Future Architecture
+
+Although Stock Insights currently operates as a modular Node.js application, the architecture has been designed to support future evolution.
+
+Possible future directions include:
+
+- Dedicated Analytics Service
+- AI Insights Service
+- Notification Service
+- Broker Integration Service
+- Portfolio Synchronization Service
+
+These services could communicate through asynchronous messaging while remaining independently deployable.
+
+This approach would allow the platform to grow without introducing unnecessary complexity during the early stages of development.
+
+
+# Known Limitations
+
+The current implementation intentionally focuses on portfolio analytics rather than acting as a complete trading platform.
+
+Current limitations include:
+
+- Limited broker integrations
+- Historical market data is not available for every scenario
+- AI-generated explanations depend on the quality of available portfolio data
+- Some analytical models are intentionally conservative while additional validation is performed
+- Mobile experience can be further improved
+
+These limitations have been accepted to keep the project focused on portfolio analytics and decision support.
+
+
+# Acknowledgements
+
+This project makes use of several excellent open-source technologies.
+
+Special thanks to the maintainers of:
+
+- React
+- Node.js
+- Express.js
+- MongoDB
+- JWT
+- OpenAPI
+- Swagger
+
+Their tools make projects like this possible.
+
+
+# About the Author
+
+Hi, I'm **Aniruddha Deshpande**.
+
+I'm a Technical Architect with over 21 years of software engineering experience, specializing in backend platforms, enterprise application architecture, API design and e-commerce systems.
+
+Stock Insights was created as a hands-on project to explore modern full-stack development, investment analytics and AI-assisted software engineering.
+
+If you'd like to connect or discuss the project, feel free to reach out.
+
+- GitHub: https://github.com/aniruddhaad
+- LinkedIn: *https://www.linkedin.com/in/aniruddhad/*
+
+
+# Final Notes
+
+Stock Insights continues to evolve as new ideas are explored.
+
+The primary objective is not simply to build another portfolio tracker, but to create a practical platform that demonstrates modern software engineering, clean architecture and thoughtful investment analytics.
+
+Feedback, suggestions and constructive discussions are always welcome.
