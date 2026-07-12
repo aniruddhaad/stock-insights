@@ -302,7 +302,7 @@ class SamcoBrokerProvider extends PortfolioIngestionProvider {
     this.accessToken = this.credentials.accessToken || null;
     this.sessionToken = this.credentials.sessionToken || null;
     this.sessionExpiresAt = this.sessionToken ? Date.now() + DEFAULT_SESSION_TTL_MS : 0;
-    this.http = options.http || axios.create({ baseURL: this.baseUrl, timeout: this.credentials.timeoutMs || 15000 });
+    this.http = options.http || axios.create({ baseURL: this.baseUrl, timeout: this.credentials.timeoutMs || 60000 });
     this.maxRetries = Number.isInteger(this.credentials.maxRetries) ? this.credentials.maxRetries : 2;
     this.endpointPaths = {
       accessToken: this.credentials.accessTokenPath || "/accessToken/token",
