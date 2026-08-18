@@ -1,23 +1,23 @@
 const fs = require("fs/promises");
 const path = require("path");
 const { ScreenerFundamentalParser } = require("./screener-parser.service");
+const { getCompanyClassification, normalizeClassification } = require("./company-classification.service");
 const { saveCompanyFundamentals } = require("./fundamental-data.service");
 
 const DEFAULT_SCREENER_DIR = path.join(__dirname, "..", "..", "data", "screener");
-
-const COMPANY_METADATA = {
-  SBIN: { isFinancial: true },
-  HDFCBANK: { isFinancial: true }
-};
 
 function normalizeSymbolFromFilename(fileName) {
   return path.basename(fileName, path.extname(fileName)).trim().toUpperCase();
 }
 
-function getCompanyMetadata(symbol) {
+async function getCompanyMetadata(symbol, classificationProvider = getCompanyClassification) {
   const normalizedSymbol = String(symbol || "").trim().toUpperCase();
+  const classification = classificationProvider
+    ? await classificationProvider(normalizedSymbol)
+    : null;
+
   return {
-    isFinancial: COMPANY_METADATA[normalizedSymbol]?.isFinancial === true
+    classification: normalizeClassification(classification)
   };
 }
 
@@ -60,6 +60,7 @@ async function importScreenerXlsxFiles(options = {}) {
   const directoryPath = options.directoryPath || DEFAULT_SCREENER_DIR;
   const parser = options.parser || ScreenerFundamentalParser;
   const save = options.saveCompanyFundamentals || saveCompanyFundamentals;
+  const classificationProvider = options.classificationProvider || getCompanyClassification;
   const files = options.files || await discoverScreenerXlsxFiles(directoryPath);
   const summary = createEmptySummary(files.length);
 
@@ -71,7 +72,7 @@ async function importScreenerXlsxFiles(options = {}) {
       const parsedData = parser.parse(filePath, { symbol: symbolFromFilename });
       const symbol = parsedData.identity?.symbol || symbolFromFilename;
       const metadata = {
-        ...getCompanyMetadata(symbol),
+        ...await getCompanyMetadata(symbol, classificationProvider),
         source: "screener_xlsx",
         sourceFileName,
         dataAsOf: resolveDataAsOf(parsedData)
@@ -95,7 +96,6 @@ async function importScreenerXlsxFiles(options = {}) {
 }
 
 module.exports = {
-  COMPANY_METADATA,
   DEFAULT_SCREENER_DIR,
   discoverScreenerXlsxFiles,
   getCompanyMetadata,

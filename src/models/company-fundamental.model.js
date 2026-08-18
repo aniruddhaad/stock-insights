@@ -32,6 +32,23 @@ const companyFundamentalSchema = new mongoose.Schema(
       enum: ["large", "mid", "small", "unknown"],
       default: "unknown"
     },
+    classification: {
+      sector: {
+        type: String,
+        trim: true,
+        default: null
+      },
+      industry: {
+        type: String,
+        trim: true,
+        default: null
+      },
+      superSector: {
+        type: String,
+        enum: ["cyclical", "defensive", "sensitive", "unknown"],
+        default: "unknown"
+      }
+    },
     isFinancial: {
       type: Boolean,
       default: false

@@ -1,4 +1,5 @@
 const CompanyFundamental = require("../models/company-fundamental.model");
+const { normalizeClassification } = require("./company-classification.service");
 
 function normalizeSymbol(symbol) {
   return String(symbol || "").trim().toUpperCase();
@@ -10,6 +11,10 @@ function resolveMarketCapCategory(marketCap) {
   if (num > 200000) return "large";
   if (num > 50000) return "mid";
   return "small";
+}
+
+function hasOwn(object, property) {
+  return Object.prototype.hasOwnProperty.call(object, property);
 }
 
 function mapParsedToDocument(parsedData, metadata = {}) {
@@ -26,15 +31,16 @@ function mapParsedToDocument(parsedData, metadata = {}) {
 
   const marketCap = identity.marketCap !== undefined ? identity.marketCap : null;
   const marketCapCategory = metadata.marketCapCategory || resolveMarketCapCategory(marketCap);
+  const classification = normalizeClassification(metadata.classification || parsedData.classification);
 
-  return {
+  const document = {
     symbol,
     companyName: identity.companyName || null,
     marketCap,
     currentPrice: identity.currentPrice !== undefined ? identity.currentPrice : null,
     faceValue: identity.faceValue !== undefined ? identity.faceValue : null,
     marketCapCategory,
-    isFinancial: metadata.isFinancial === true,
+    classification,
     growth: {
       revenueGrowth1y: growth.revenueGrowth1y !== undefined ? growth.revenueGrowth1y : null,
       revenueGrowth3y: growth.revenueGrowth3y !== undefined ? growth.revenueGrowth3y : null,
@@ -74,6 +80,12 @@ function mapParsedToDocument(parsedData, metadata = {}) {
     dataAsOf: metadata.dataAsOf || null,
     importedAt: metadata.importedAt || new Date()
   };
+
+  if (hasOwn(metadata, "isFinancial")) {
+    document.isFinancial = metadata.isFinancial === true;
+  }
+
+  return document;
 }
 
 async function saveCompanyFundamentals(parsedData, metadata = {}) {

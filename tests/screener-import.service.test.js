@@ -26,12 +26,40 @@ test("discoverScreenerXlsxFiles finds only .xlsx files in stable order", async (
   }
 });
 
-test("getCompanyMetadata uses explicit financial classification only", () => {
-  assert.deepEqual(getCompanyMetadata("SBIN"), { isFinancial: true });
-  assert.deepEqual(getCompanyMetadata("hdfcbank"), { isFinancial: true });
-  assert.deepEqual(getCompanyMetadata("TCS"), { isFinancial: false });
-  assert.deepEqual(getCompanyMetadata("PIDILITIND"), { isFinancial: false });
-  assert.deepEqual(getCompanyMetadata("UnknownBankLikeName"), { isFinancial: false });
+test("getCompanyMetadata defaults to unknown classification when provider has no data", async () => {
+  assert.deepEqual(await getCompanyMetadata("SBIN", async () => null), {
+    classification: {
+      sector: null,
+      industry: null,
+      superSector: "unknown"
+    }
+  });
+  assert.deepEqual(await getCompanyMetadata("UnknownBankLikeName", async () => null), {
+    classification: {
+      sector: null,
+      industry: null,
+      superSector: "unknown"
+    }
+  });
+});
+
+test("getCompanyMetadata normalizes provider classification", async () => {
+  assert.deepEqual(
+    await getCompanyMetadata("tcs", async (symbol) => {
+      assert.equal(symbol, "TCS");
+      return {
+        sector: "Technology",
+        industry: "IT Services"
+      };
+    }),
+    {
+      classification: {
+        sector: "Technology",
+        industry: "IT Services",
+        superSector: "sensitive"
+      }
+    }
+  );
 });
 
 test("importScreenerXlsxFiles handles successful imports and source metadata", async () => {
@@ -50,6 +78,7 @@ test("importScreenerXlsxFiles handles successful imports and source metadata", a
   const summary = await importScreenerXlsxFiles({
     files: ["C:\\fixtures\\SBIN.xlsx", "C:\\fixtures\\TCS.xlsx"],
     parser,
+    classificationProvider: async () => null,
     saveCompanyFundamentals: async (parsedData, metadata) => {
       calls.push({ parsedData, metadata });
       return { symbol: parsedData.identity.symbol };
@@ -62,9 +91,46 @@ test("importScreenerXlsxFiles handles successful imports and source metadata", a
   assert.deepEqual(summary.symbolsImported, ["SBIN", "TCS"]);
   assert.equal(calls[0].metadata.source, "screener_xlsx");
   assert.equal(calls[0].metadata.sourceFileName, "SBIN.xlsx");
-  assert.equal(calls[0].metadata.isFinancial, true);
+  assert.deepEqual(calls[0].metadata.classification, {
+    sector: null,
+    industry: null,
+    superSector: "unknown"
+  });
+  assert.equal(Object.prototype.hasOwnProperty.call(calls[0].metadata, "isFinancial"), false);
   assert.equal(calls[0].metadata.dataAsOf, "Mar-24");
-  assert.equal(calls[1].metadata.isFinancial, false);
+  assert.equal(calls[1].metadata.classification.superSector, "unknown");
+});
+
+test("importScreenerXlsxFiles passes provider classification through source metadata", async () => {
+  const calls = [];
+  const parser = {
+    parse(filePath) {
+      return { identity: { symbol: path.basename(filePath, ".xlsx").toUpperCase() } };
+    }
+  };
+
+  const summary = await importScreenerXlsxFiles({
+    files: ["C:\\fixtures\\TCS.xlsx"],
+    parser,
+    classificationProvider: async (symbol) => {
+      assert.equal(symbol, "TCS");
+      return {
+        sector: "Technology",
+        industry: "IT Services"
+      };
+    },
+    saveCompanyFundamentals: async (parsedData, metadata) => {
+      calls.push({ parsedData, metadata });
+      return { symbol: parsedData.identity.symbol };
+    }
+  });
+
+  assert.equal(summary.successfullyImported, 1);
+  assert.deepEqual(calls[0].metadata.classification, {
+    sector: "Technology",
+    industry: "IT Services",
+    superSector: "sensitive"
+  });
 });
 
 test("importScreenerXlsxFiles continues after one file fails", async () => {

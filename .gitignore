@@ -6,5 +6,6 @@ tests/*
 !tests/portfolio-decision.service.test.js
 !tests/decision-consistency.test.js
 !tests/screener-import.service.test.js
+!tests/company-classification.service.test.js
 # AI / Codex agent workspace
 .agents/

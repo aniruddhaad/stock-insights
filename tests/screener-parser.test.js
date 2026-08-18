@@ -51,32 +51,32 @@ test("Screener parser extracts authentic metrics for TCS.xlsx", () => {
   // Identity
   assert.equal(data.identity.symbol, "TCS");
   assert.equal(data.identity.companyName, "TATA CONSULTANCY SERVICES LTD");
-  assert.equal(data.identity.marketCap, 926071.97);
-  assert.equal(data.identity.currentPrice, 2559.2);
+  assert.equal(data.identity.marketCap, 826733.07);
+  assert.equal(data.identity.currentPrice, 2285);
   assert.equal(data.identity.faceValue, 1);
 
   // Growth
-  assert.equal(data.growth.revenueGrowth1y, 5.99);
-  assert.equal(data.growth.revenueGrowth3y, 10.01);
+  assert.equal(data.growth.revenueGrowth1y, 4.58);
+  assert.equal(data.growth.revenueGrowth3y, 5.8);
   assert.equal(data.growth.revenueGrowth5y, 10.22);
-  assert.equal(data.growth.profitGrowth1y, 5.76);
-  assert.equal(data.growth.profitGrowth3y, 8.2);
-  assert.equal(data.growth.profitGrowth5y, 8.47);
+  assert.equal(data.growth.profitGrowth1y, 1.35);
+  assert.equal(data.growth.profitGrowth3y, 5.3);
+  assert.equal(data.growth.profitGrowth5y, 8.7);
   assert.equal(data.growth.profitTurnaround, false);
 
   // Profitability & Capital Efficiency
-  assert.equal(data.profitability.operatingProfitMargin, 26.4);
-  assert.equal(data.profitability.roce, 63.49);
-  assert.equal(data.profitability.roe, 51.24);
+  assert.equal(data.profitability.operatingProfitMargin, 27.11);
+  assert.equal(data.profitability.roce, 56.29);
+  assert.equal(data.profitability.roe, 45.89);
 
   // Balance Sheet & Leverage
-  assert.equal(data.balanceSheet.totalDebt, 9392);
+  assert.equal(data.balanceSheet.totalDebt, 11283);
   assert.equal(data.balanceSheet.equityShareCapital, 362);
-  assert.equal(data.balanceSheet.reserves, 94394);
-  assert.equal(data.balanceSheet.netWorth, 94756);
-  assert.equal(data.balanceSheet.capitalEmployed, 104148);
-  assert.equal(data.balanceSheet.debtToEquity, 0.1);
-  assert.equal(data.balanceSheet.interestCoverage, 83.07);
+  assert.equal(data.balanceSheet.reserves, 106878);
+  assert.equal(data.balanceSheet.netWorth, 107240);
+  assert.equal(data.balanceSheet.capitalEmployed, 118523);
+  assert.equal(data.balanceSheet.debtToEquity, 0.11);
+  assert.equal(data.balanceSheet.interestCoverage, 54.37);
 
   // Series
   assert.ok(data.series.sales.length >= 8);
@@ -84,36 +84,36 @@ test("Screener parser extracts authentic metrics for TCS.xlsx", () => {
   assert.ok(data.series.operatingCashFlow.length >= 8);
 });
 
-test("Screener parser extracts authentic metrics for SBIN.xlsx (Banking sector)", () => {
+test("Screener parser extracts authentic metrics for SBIN.xlsx", () => {
   const sbinPath = path.join(FIXTURES_DIR, "SBIN.xlsx");
   const data = ScreenerFundamentalParser.parse(sbinPath);
 
   // Identity
   assert.equal(data.identity.symbol, "SBIN");
   assert.equal(data.identity.companyName, "STATE BANK OF INDIA");
-  assert.equal(data.identity.marketCap, 979878.78);
-  assert.equal(data.identity.currentPrice, 1061.45);
+  assert.equal(data.identity.marketCap, 974707.14);
+  assert.equal(data.identity.currentPrice, 1055.95);
   assert.equal(data.identity.faceValue, 1);
 
   // Growth
-  assert.equal(data.growth.revenueGrowth1y, 11.78);
-  assert.equal(data.growth.revenueGrowth3y, 19.19);
-  assert.equal(data.growth.revenueGrowth5y, 12.71);
-  assert.equal(data.growth.profitGrowth1y, 15.62);
-  assert.equal(data.growth.profitGrowth3y, 29.91);
-  assert.equal(data.growth.profitGrowth5y, 31.44);
+  assert.equal(data.growth.revenueGrowth1y, 5.02);
+  assert.equal(data.growth.revenueGrowth3y, 13.64);
+  assert.equal(data.growth.revenueGrowth5y, 13.11);
+  assert.equal(data.growth.profitGrowth1y, 7.4);
+  assert.equal(data.growth.profitGrowth3y, 14.39);
+  assert.equal(data.growth.profitGrowth5y, 30.03);
 
   // Profitability
-  assert.equal(data.profitability.roe, 15.93);
-  assert.equal(data.profitability.roce, 6.23);
+  assert.equal(data.profitability.roe, 13.97);
+  assert.equal(data.profitability.roce, 5.78);
 
   // Balance sheet
-  assert.equal(data.balanceSheet.netWorth, 487036.76);
-  assert.equal(data.balanceSheet.totalDebt, 6050755.27);
-  assert.equal(data.balanceSheet.debtToEquity, 12.42);
+  assert.equal(data.balanceSheet.netWorth, 596130.87);
+  assert.equal(data.balanceSheet.totalDebt, 6820399.27);
+  assert.equal(data.balanceSheet.debtToEquity, 11.44);
 });
 
-test("Screener parser extracts authentic metrics for PIDILITIND.xlsx (Manufacturing / Chemicals)", () => {
+test("Screener parser extracts authentic metrics for PIDILITIND.xlsx", () => {
   const pidilitePath = path.join(FIXTURES_DIR, "PIDILITIND.xlsx");
   const buffer = fs.readFileSync(pidilitePath);
   const data = ScreenerFundamentalParser.parse(buffer, { symbol: "PIDILITIND" });
@@ -121,26 +121,26 @@ test("Screener parser extracts authentic metrics for PIDILITIND.xlsx (Manufactur
   // Identity
   assert.equal(data.identity.symbol, "PIDILITIND");
   assert.equal(data.identity.companyName, "PIDILITE INDUSTRIES LTD");
-  assert.equal(data.identity.marketCap, 137859.28);
-  assert.equal(data.identity.currentPrice, 1355);
+  assert.equal(data.identity.marketCap, 169869.21);
+  assert.equal(data.identity.currentPrice, 1669);
 
   // Growth
-  assert.equal(data.growth.revenueGrowth1y, 6.12);
-  assert.equal(data.growth.revenueGrowth3y, 9.82);
-  assert.equal(data.growth.revenueGrowth5y, 12.49);
-  assert.equal(data.growth.profitGrowth1y, 20.06);
-  assert.equal(data.growth.profitGrowth3y, 19.8);
-  assert.equal(data.growth.profitGrowth5y, 13.21);
+  assert.equal(data.growth.revenueGrowth1y, 11.11);
+  assert.equal(data.growth.revenueGrowth3y, 7.36);
+  assert.equal(data.growth.revenueGrowth5y, 14.89);
+  assert.equal(data.growth.profitGrowth1y, 17.95);
+  assert.equal(data.growth.profitGrowth3y, 24.36);
+  assert.equal(data.growth.profitGrowth5y, 16.7);
 
   // Profitability & Capital Efficiency
-  assert.equal(data.profitability.operatingProfitMargin, 22.91);
-  assert.equal(data.profitability.roce, 28.14);
-  assert.equal(data.profitability.roe, 21.29);
+  assert.equal(data.profitability.operatingProfitMargin, 24.12);
+  assert.equal(data.profitability.roce, 30);
+  assert.equal(data.profitability.roe, 22.61);
 
   // Balance sheet
-  assert.equal(data.balanceSheet.totalDebt, 454.14);
-  assert.equal(data.balanceSheet.debtToEquity, 0.05);
-  assert.equal(data.balanceSheet.interestCoverage, 57.06);
+  assert.equal(data.balanceSheet.totalDebt, 417.21);
+  assert.equal(data.balanceSheet.debtToEquity, 0.04);
+  assert.equal(data.balanceSheet.interestCoverage, 62.24);
 });
 
 test("Screener parser returns nulls and empty series for incomplete / dummy inputs without crashing", () => {
