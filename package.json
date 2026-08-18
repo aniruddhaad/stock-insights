@@ -7,6 +7,7 @@
   "scripts": {
     "start": "node src/server.js",
     "start:ai-news": "node ai-news-service/src/server.js",
+    "import": "node src/scripts/import-screener-fundamentals.js",
     "seed": "node src/seeds/seed.js",
     "test": "node --test --test-isolation=none tests/*.test.js",
     "test:integration:samco": "node --test --test-isolation=none tests/samco-star-excel.integration.js"

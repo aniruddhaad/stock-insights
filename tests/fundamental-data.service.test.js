@@ -11,7 +11,7 @@ const {
 } = require("../src/services/fundamental-data.service");
 const { ScreenerFundamentalParser } = require("../src/services/screener-parser.service");
 
-const FIXTURES_DIR = path.join(__dirname, "fixtures", "screener");
+const FIXTURES_DIR = path.join(__dirname, "..", "data", "screener");
 
 test("normalizeSymbol trims and converts to uppercase", () => {
   assert.equal(normalizeSymbol("  tcs  "), "TCS");

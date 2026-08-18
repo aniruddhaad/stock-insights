@@ -12,7 +12,7 @@ const {
   toNumber
 } = require("../src/services/screener-parser.service");
 
-const FIXTURES_DIR = path.join(__dirname, "fixtures", "screener");
+const FIXTURES_DIR = path.join(__dirname, "..", "data", "screener");
 
 test("helper functions handle data normalization and numeric math correctly", () => {
   // toNumber
