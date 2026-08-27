@@ -40,13 +40,23 @@ function calculateRawAdjustment(analysis) {
 
 function collectSignals(analysis) {
   const signals = [];
+
   if (!analysis || typeof analysis !== "object") {
+    return signals;
+  }
+
+  if (analysis.context && analysis.context.isFinancial === true) {
     return signals;
   }
 
   for (const section of PARTICIPATING_SECTIONS) {
     const sectionData = analysis[section];
-    if (sectionData && typeof sectionData.rating === "string" && sectionData.rating !== RATINGS.UNKNOWN) {
+
+    if (
+      sectionData &&
+      typeof sectionData.rating === "string" &&
+      sectionData.rating !== RATINGS.UNKNOWN
+    ) {
       signals.push(`${section}_${sectionData.rating.toLowerCase()}`);
     }
   }
