@@ -1,13 +1,7 @@
 node_modules/
 .env
 npm-debug.log*
-tests/*
-!tests/samco-star-excel.integration.js
-!tests/portfolio-decision.service.test.js
-!tests/decision-consistency.test.js
-!tests/screener-import.service.test.js
-!tests/company-classification.service.test.js
-!tests/fundamental-analysis.service.test.js
-# AI / Codex agent workspace
+# Agent workspace and local caches
 .agents/
 .aider*
+.aider.tags.cache.v4/
