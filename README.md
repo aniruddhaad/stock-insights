@@ -4,7 +4,7 @@
 
 ![Node.js](https://img.shields.io/badge/Node.js-22-339933?logo=node.js&logoColor=white)
 ![Express](https://img.shields.io/badge/Express-5-000000?logo=express&logoColor=white)
-![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
+![Vanilla JavaScript](https://img.shields.io/badge/Frontend-Vanilla%20JS-F7DF1E?logo=javascript&logoColor=black)
 ![MongoDB](https://img.shields.io/badge/MongoDB-Database-47A248?logo=mongodb&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-blue)
 ![Render](https://img.shields.io/badge/Hosted%20on-Render-7B3FE4?logo=render&logoColor=white)
@@ -14,7 +14,7 @@
 
 **💻 Source Code:** https://github.com/aniruddhaad/stock-insights
 
-Stock Insights is a full-stack web application that helps investors analyze their portfolios beyond basic profit and loss. It combines portfolio analytics, allocation analysis, sell-decision support, scenario projections, broker transaction imports, and AI-assisted insights into a single platform.
+Stock Insights is a full-stack web application that helps investors analyze their portfolios beyond basic profit and loss. It combines portfolio analytics, allocation analysis, sell-decision support, scenario projections, broker transaction imports, and explainable portfolio decisions and auxiliary news-sentiment signals.
 
 ---
 
@@ -32,12 +32,12 @@ https://github.com/aniruddhaad/stock-insights
 
 | Layer | Technologies |
 |--------|--------------|
-| Frontend | React |
+| Frontend | Static HTML, CSS, vanilla JavaScript, Bootstrap |
 | Backend | Node.js, Express.js |
 | Database | MongoDB |
 | Authentication | JWT |
 | API Documentation | OpenAPI, Swagger |
-| Testing | Jest |
+| Testing | Node.js built-in node:test |
 | Deployment | Render |
 
 ---
@@ -51,7 +51,7 @@ https://github.com/aniruddhaad/stock-insights
 - Technology Stack
 - Broker Integration & Portfolio Import
 - Portfolio Decision Engine
-- AI-Assisted Insights
+- News Sentiment & Decision Explanations
 - Project Structure
 - Getting Started
 - Environment Variables
@@ -79,7 +79,7 @@ Stock Insights was created to answer more meaningful investment questions:
 - How does inflation affect future portfolio value?
 - What signals can be derived from historical portfolio performance?
 
-Instead of acting as a trading platform, Stock Insights focuses on **investment decision support** by combining portfolio analytics, scoring models, scenario projections, and AI-assisted explanations into a single application.
+Instead of acting as a trading platform, Stock Insights focuses on **investment decision support** by combining portfolio analytics, scoring models, scenario projections, and decision explanations and primary-driver reasoning into a single application.
 
 # Why I Built This
 
@@ -94,9 +94,9 @@ This project began as an experiment to build a richer portfolio analytics platfo
 - Scenario projections
 - Historical transaction analysis
 - Decision-support scoring
-- AI-assisted explanations
+- decision explanations and primary-driver reasoning
 
-The project also became an opportunity to explore practical software architecture using React, Node.js, Express, MongoDB, REST APIs, JWT authentication, and modular backend design.
+The project also became an opportunity to explore practical software architecture using browser-native HTML/CSS/JavaScript, Node.js, Express, MongoDB, REST APIs, JWT authentication, and modular backend design.
 
 # Features
 
@@ -130,7 +130,7 @@ Examples include:
 - Allocation analysis
 - Portfolio rankings
 - Position scoring
-- AI-assisted explanations
+- decision explanations and primary-driver reasoning
 - Confidence indicators
 
 ### Scenario Projection
@@ -149,7 +149,8 @@ Supports importing transaction history using broker-specific Excel templates.
 
 Current implementation includes:
 
-- Samco XLSX Import
+- Samco XLSX import and Samco/Zerodha/generic CSV provider adapters.
+- Samco and Zerodha broker API provider foundations; production readiness and API permissions require provider-contract verification.
 
 The imported transaction history enables significantly richer portfolio analytics than relying solely on broker holdings APIs.
 
@@ -169,7 +170,7 @@ The backend exposes RESTful APIs covering:
 Stock Insights follows a layered architecture that separates presentation, business logic and persistence.
 
 ```text
-                    React Frontend
+                    Browser UI (HTML / JS)
                            │
                            ▼
                   Express REST API
@@ -194,14 +195,16 @@ The architecture intentionally keeps responsibilities separated so that each ser
 
 Business logic is isolated from HTTP controllers, making the codebase easier to maintain, test and extend.
 
+Current-state architecture and delivery source of truth: [Architecture](docs/architecture.md) and [Engineering Roadmap](docs/roadmap.md). The Screener fundamental-analysis modules currently exist as standalone/import foundations and are not yet connected to live portfolio scoring.
+
 
 # Technology Stack
 
 ## Frontend
 
-### React
+### Browser UI
 
-React was chosen to build a responsive single-page application with reusable components and efficient state management.
+The current frontend is served as static HTML pages with CSS, vanilla JavaScript page modules, and Bootstrap. It is not a React application.
 
 ---
 
@@ -291,7 +294,8 @@ Currently supports importing historical transactions using a broker-specific Exc
 
 Current implementation:
 
-- Samco XLSX Import
+- Samco XLSX import and Samco/Zerodha/generic CSV provider adapters.
+- Samco and Zerodha broker API provider foundations; production readiness and API permissions require provider-contract verification.
 
 By reconstructing transaction history, the application generates richer portfolio analytics than holdings-only integrations.
 
@@ -337,9 +341,9 @@ These observations are intended to support investment analysis rather than provi
 
 ---
 
-# AI-Assisted Insights
+# News Sentiment & Decision Explanations
 
-Stock Insights incorporates AI-assisted analysis to generate readable explanations from portfolio data.
+Stock Insights generates deterministic decision explanations from portfolio data and can consume auxiliary news-sentiment output.
 
 Rather than presenting only numerical values, the platform converts analytical results into summaries that are easier for investors to understand.
 
@@ -351,11 +355,11 @@ Examples include:
 - Sell decision reasoning
 - Scenario interpretation
 
-AI is used as an explanation layer built on top of deterministic portfolio analytics.
+News sentiment is an auxiliary input; it does not replace deterministic calculations.
 
 All analytical calculations continue to originate from the application's own business logic.
 
-This approach keeps portfolio calculations transparent while using AI to improve readability.
+The current auxiliary classifier is keyword-based and uses mock headline defaults; it is not a production LLM or verified live-news pipeline.
 
 ---
 
@@ -364,7 +368,7 @@ This approach keeps portfolio calculations transparent while using AI to improve
 ```text
 stock-insights/
 │
-├── ai-news-service/          AI-assisted news processing
+├── ai-news-service/          Auxiliary keyword-based news sentiment service
 │
 ├── docs/                     Project documentation
 │
@@ -462,11 +466,18 @@ Typical configuration includes:
 | Variable | Description |
 |----------|-------------|
 | PORT | Express application port |
-| MONGODB_URI | MongoDB connection string |
+| MONGO_URI | MongoDB connection string |
 | JWT_SECRET | Secret used for JWT authentication |
 | JWT_EXPIRES_IN | JWT expiration period |
-| OPENAI_API_KEY | AI integration (if enabled) |
-| NEWS_API_KEY | Market news integration |
+
+| MONGO_DB_NAME | MongoDB database name |
+| AI_NEWS_SERVICE_URL | Auxiliary sentiment service URL |
+| AI_NEWS_SERVICE_PORT | Auxiliary sentiment service port |
+| AI_NEWS_TIMEOUT_MS | Sentiment request timeout |
+| MARKET_DATA_TIMEOUT_MS | Market data request timeout |
+| DEFAULT_SCENARIO_YEARS | Default scenario horizon |
+| DEFAULT_INFLATION_RATE | Default inflation assumption |
+| LONG_TERM_HOLDING_DAYS | Long-term holding threshold |
 | NODE_ENV | Runtime environment |
 
 > **Important**
@@ -478,7 +489,7 @@ Typical configuration includes:
 
 # REST API
 
-The backend exposes RESTful APIs that power the React frontend.
+The backend exposes RESTful APIs that power the static browser frontend.
 
 Major API groups include:
 
@@ -514,17 +525,9 @@ Keeping the API specification synchronized with implementation makes the applica
 
 # Testing
 
-The project includes automated tests covering important business functionality.
+The project uses Node.js built-in node:test (not Jest). The current local suite contains 17 *.test.js files and the latest audit run passed 118 tests. A separate Samco Excel integration test is available through npm run test:integration:samco.
 
-Areas covered include:
-
-- Authentication
-- API endpoints
-- Portfolio calculations
-- Business services
-- Utility functions
-
-Testing helps ensure that new functionality can be added without breaking existing behavior.
+Coverage includes decision consistency, classification, fundamental-analysis modules, scoring, market-data fallback, broker/CSV ingestion, FIFO reconstruction, Screener parsing/import, scenarios, sell analysis, transactions, and UI formatting. HTTP/API integration, security, browser smoke tests, and clean-clone CI coverage remain incomplete. See docs/test-coverage-review.md.
 
 ---
 
@@ -572,9 +575,7 @@ Keeping portfolio calculations separate from controllers made the application ea
 
 ## AI works best as an assistant
 
-Rather than allowing AI to make investment decisions, the application uses deterministic calculations to generate portfolio metrics and employs AI only to explain the results in natural language.
-
-This combination improves transparency while making analytical output easier to understand.
+Portfolio calculations and position decisions are deterministic. The auxiliary AI News service currently uses keyword-based headline classification and mock headlines by default; it is not a production LLM or verified live-news pipeline. Natural-language explanations and sentiment inputs must be treated according to their actual provenance.
 
 ---
 
@@ -590,21 +591,18 @@ Each iteration highlighted opportunities to simplify the design, improve separat
 
 The project will continue evolving as new capabilities are explored.
 
-Planned enhancements include:
+The prioritized roadmap is maintained in docs/roadmap.md. Current high-priority work includes:
 
-- Additional broker integrations
-- Live market data
-- Portfolio rebalancing recommendations
-- Dividend tracking
-- Goal-based investment planning
-- Portfolio benchmarking
-- Advanced risk analytics
-- Email notifications
-- Scheduled portfolio reports
-- AI-powered portfolio summaries
-- Docker deployment
-- CI/CD pipeline
-- Kubernetes deployment
+- Security hardening (JWT secret validation, broker credential encryption, CORS allowlist, rate limiting, debug-route protection)
+- Making all intended tests reproducible from a clean GitHub clone and adding CI
+- Completing API/OpenAPI contract parity
+- Wiring Screener fundamentals and the score adapter into the live portfolio decision flow
+- Designing a separate financial-company fundamental model
+- Market-data freshness and live/stored/mock provenance controls
+- Replacing mock news inputs with traceable current-news sources
+- Verifying Samco and Zerodha provider contracts and reconciliation
+
+Longer-term product work includes dividends/corporate actions, portfolio benchmarking, advanced risk analytics, rebalancing, goal planning, alerts and scheduled reports. Kubernetes and service decomposition are not immediate priorities.
 
 ---
 
@@ -651,7 +649,7 @@ The following high-level workflow illustrates how Stock Insights processes user 
  Allocation      Sell Analysis   Scenario Projection
                      │
                      ▼
-             AI-assisted Insights
+             News Sentiment
                      │
                      ▼
              Results displayed in UI
@@ -729,7 +727,7 @@ Several security practices are incorporated into the application.
 - Error handling
 - Consistent HTTP response codes
 
-Sensitive configuration is externalized through environment variables rather than embedded in source code.
+Sensitive configuration is intended to be externalized through environment variables. However, the current code still has a hard-coded JWT-secret fallback and broker credentials are stored in MongoDB without encryption at rest. These are known security gaps and must be resolved before production use.
 
 # API Overview
 
@@ -876,7 +874,7 @@ Current limitations include:
 
 - Limited broker integrations
 - Historical market data is not available for every scenario
-- AI-generated explanations depend on the quality of available portfolio data
+- Deterministic decision explanations depend on the quality of available portfolio data
 - Some analytical models are intentionally conservative while additional validation is performed
 - Mobile experience can be further improved
 
@@ -889,7 +887,7 @@ This project makes use of several excellent open-source technologies.
 
 Special thanks to the maintainers of:
 
-- React
+- Bootstrap
 - Node.js
 - Express.js
 - MongoDB
@@ -921,3 +919,18 @@ Stock Insights continues to evolve as new ideas are explored.
 The primary objective is not simply to build another portfolio tracker, but to create a practical platform that demonstrates modern software engineering, clean architecture and thoughtful investment analytics.
 
 Feedback, suggestions and constructive discussions are always welcome.
+
+---
+
+## Current implementation status (10 November 2026)
+
+The following distinctions are important when evaluating the current release:
+
+- The browser frontend is static HTML/CSS/vanilla JavaScript with Bootstrap, not React.
+- Tests run with Node.js built-in node:test, not Jest.
+- Fundamental data import, analysis and score-adapter modules exist, but call-site inspection confirms they are not connected to the live portfolio decision path. The current fundamentalScore component is derived from holding duration. Financial-company fundamental analysis is not implemented.
+- The separate AI News service currently uses keyword sentiment classification and mock headline defaults; it is not a verified live-news or production LLM pipeline.
+- Market data can fall back to stored or mock prices. The source must be checked before treating a quote as current.
+- Broker credentials are currently stored without encryption at rest, the JWT secret has a hard-coded fallback, and CORS is unrestricted. These are release-blocking security gaps for production use.
+
+See [Architecture](docs/architecture.md) for the current system design and [Engineering Roadmap](docs/roadmap.md) for prioritized work.
