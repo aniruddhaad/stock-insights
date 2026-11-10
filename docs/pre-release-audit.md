@@ -1,9 +1,9 @@
 # Pre-GitHub Release Audit — Stock Insights
 
-**Date:** 10 November 2026  
-**Repository:** `aniruddhaad/stock-insights`  
-**Branch:** `main`  
-**Latest verified remote commit at audit update:** `7aa7965`  
+**Date:** 10 November 2026
+**Repository:** `aniruddhaad/stock-insights`
+**Branch:** `main`
+**Latest verified remote commit before this audit update:** `5c9d509`
 **Scope:** repository inventory, architecture/code review, test execution, documentation, Git hygiene and staged publication.
 
 ## Executive result
@@ -32,6 +32,9 @@ All three commits were pushed to `origin/main` and the remote was verified synch
 - Full unit suite: **118 passed, 0 failed**.
 - Samco Excel integration test: **1 passed, 0 failed**.
 - Syntax sweep: **98 JavaScript files** checked with `node --check`; 0 syntax failures in the latest run.
+- Fresh GitHub clone: `npm ci` succeeded and `npm test` passed **118/118** without a local `.env`.
+- The separate Samco integration script failed in the clean clone before test setup because `MONGO_URI` was not configured; it passed in the original local environment.
+- `npm audit` reported **10 vulnerabilities** in the installed dependency tree: 2 critical, 6 high and 2 moderate. No dependency changes or automatic fixes were applied.
 - OpenAPI YAML syntax parsed successfully; route/schema parity remains incomplete.
 - OpenAPI currently lists 9 paths while the route inventory includes additional import, broker, transaction and debug endpoints.
 
@@ -47,13 +50,14 @@ All three commits were pushed to `origin/main` and the remote was verified synch
 
 ### Critical / high priority
 
-1. **Clean-clone and CI reproducibility:** the local test suite passes, but a fresh-clone `npm ci` + `npm test` run and a CI workflow have not yet been verified.
+1. **Clean-clone and CI reproducibility:** fresh-clone `npm ci` + `npm test` is verified (118/118). The separate Samco integration script needs `MONGO_URI` and the workbook; a clean-clone run without `MONGO_URI` fails before test setup. A CI workflow is not yet established.
 2. **Unsafe JWT fallback:** `src/config/env.js` falls back to a hard-coded JWT secret. Production must fail closed when a strong secret is absent.
 3. **Broker credentials are not encrypted at rest:** `BrokerConnection.credentials` is persisted as a Mixed field. JSON serialization omits it, but that is not encryption.
 4. **CORS is unrestricted:** `src/app.js` calls `cors()` without an origin allowlist.
 5. **Token storage is localStorage:** this increases exposure if browser XSS occurs; assess HttpOnly secure cookies and CSRF protection.
 6. **Debug endpoints and broker-sync logging need production hardening:** confirm authorization, redaction and operational auditability.
-7. **Rate limiting and security regression tests** are not yet established as release gates.
+7. **Dependency vulnerabilities:** `npm audit` reports 10 findings (2 critical, 6 high, 2 moderate), all with a fix available according to npm. These have not been remediated.
+8. **Rate limiting and security regression tests** are not yet established as release gates.
 
 ### Documentation and API contract
 
@@ -75,11 +79,13 @@ All three commits were pushed to `origin/main` and the remote was verified synch
 
 - [x] Review and publish the additional intended test files; exclude the empty placeholder.
 - [x] Run the full local unit suite: 118 passed.
-- [x] Run the separate Samco Excel integration test: 1 passed.
+- [x] Run the separate Samco Excel integration test with the original local database configuration (1/1 passed).
+- [ ] Configure a safe `MONGO_URI` and workbook path for the Samco integration test in a clean clone.
 - [x] Validate OpenAPI YAML syntax.
 - [x] Publish architecture, roadmap, README and test-coverage documentation.
-- [ ] Run `npm ci` and `npm test` from a clean clone of the pushed GitHub branch.
+- [x] Run `npm ci` and `npm test` from a clean clone of the pushed GitHub branch (118/118 passed).
 - [ ] Add CI workflow and ensure it runs the same checks.
+- [ ] Review and remediate the 10 dependency vulnerabilities reported by `npm audit` (2 critical, 6 high, 2 moderate).
 - [ ] Compare every implemented API route with the OpenAPI specification and validate response schemas.
 - [ ] Resolve security release gates: JWT secret validation, credential encryption, CORS allowlist, rate limits, debug access and logging.
 - [ ] Review `.env.example` and confirm no real credentials or personal data are tracked.

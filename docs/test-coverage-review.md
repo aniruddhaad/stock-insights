@@ -8,9 +8,9 @@
 - Unit test command: `npm test` (`node --test --test-isolation=none tests/*.test.js`).
 - Local inventory: 17 `*.test.js` files plus the separate Samco Excel integration script.
 - Latest full unit run: **118 tests passed, 0 failed**.
-- Separate Samco Excel integration run: **1 test passed, 0 failed**.
+- Separate Samco Excel integration run: **1 test passed, 0 failed** with the local database configuration; a fresh-clone run without MONGO_URI fails before test setup.
 - Syntax sweep: 98 JavaScript files checked with `node --check`; 0 syntax failures.
-- Git hygiene finding: before this audit, only 8 tests were tracked while the ignore rule excluded most of `tests/*`. The ignore rule has now been removed. The additional local tests must be included in the release diff and verified from a clean clone.
+- Clean-clone verification: `git clone` + `npm ci` + `npm test` completed from the pushed GitHub branch; **118 tests passed, 0 failed** without a local `.env`.
 
 ## Test areas present
 
@@ -32,7 +32,7 @@
 
 ## Gaps to close
 
-1. **Clean-clone reproducibility:** commit all intended test files and run `npm ci` plus `npm test` from a fresh clone.
+1. **Clean-clone integration setup:** the unit suite passes on a fresh clone. The separate Samco integration script needs `MONGO_URI` and the Samco workbook; document a safe test-database setup or make the integration fixture self-contained.
 2. **HTTP/API integration:** add tests for auth, ownership isolation, validation, error envelopes, broker endpoints, imports and transactions.
 3. **OpenAPI parity:** current OpenAPI file documents only a subset of implemented routes. Add broker, import, transaction and debug routes, and validate response schemas against actual controllers.
 4. **Security tests:** verify missing/weak production JWT secret is rejected, CORS origin allowlist, auth rate limiting, credential redaction, and authorization on debug/sync endpoints.
@@ -44,7 +44,7 @@
 
 ## Highest-value next tests
 
-1. Clean-clone test run in CI.
+1. Add a clean-clone CI test run (local fresh-clone unit run already passes).
 2. API ownership and auth integration tests.
 3. Broker credential redaction/encryption and route access tests.
 4. Market-data stale/mock provenance tests.

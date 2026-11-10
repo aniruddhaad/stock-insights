@@ -1,6 +1,6 @@
 # Stock Insights — Product & Engineering Roadmap
 
-**Last reviewed:** 10 November 2026  
+**Last reviewed:** 10 November 2026
 **Source of truth:** implementation audit of the local `main` checkout. Status labels are evidence-based, not inferred from README claims.
 
 ## Status definitions
@@ -15,12 +15,13 @@
 | Work item | Status | Acceptance criteria |
 |---|---|---|
 | Remove hard-coded JWT secret fallback | Blocked | Production startup fails if secret is missing/weak; local development uses explicit dev config |
+| Resolve dependency vulnerabilities | Blocked | Review npm audit findings (2 critical, 6 high, 2 moderate); update compatible packages and rerun the full suite without blind major upgrades |
 | Encrypt broker credentials at rest | Blocked | Encryption with managed key/rotation; credentials never appear in logs/API/errors |
 | Restrict CORS | Partial | Environment allowlist and tests for allowed/disallowed origins |
 | Authentication abuse protection | Not verified | Rate limit login/signup and sensitive endpoints; test lockout/abuse behavior |
 | Review token storage and XSS posture | Partial | CSP/output encoding review; decide secure HttpOnly cookie migration and CSRF controls |
 | Protect debug and broker-sync operations | Partial | Admin/owner authorization, audit trail, safe logging |
-| Reproducible tests from clean clone | Blocked | Remove blanket test ignore; commit intended tests; clean clone runs same test suite |
+| Reproducible unit tests from clean clone | Done (unit suite) | Fresh GitHub clone passes npm ci + npm test (118/118); DB-backed Samco integration separately requires MONGO_URI and workbook configuration |
 
 ## P1 — Product correctness and trustworthy insights
 
@@ -62,7 +63,7 @@
 
 ## Recommended execution sequence
 
-1. Correct test tracking and verify clean-clone reproducibility.
+1. [x] Correct test tracking and verify clean-clone unit-suite reproducibility (118/118); document DB-backed integration prerequisites.
 2. Resolve security release gates: JWT configuration, broker credential encryption, CORS, rate limits, debug access and logging.
 3. Verify fundamental adapter integration and add separate financial-sector assessment design.
 4. Add market quote freshness/provenance and prevent mock data from influencing live investment decisions.
